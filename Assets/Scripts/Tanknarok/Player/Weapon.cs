@@ -107,11 +107,11 @@ namespace FusionExamples.Tanknarok
 			var exit = GetExitPoint();
 			SpawnNetworkShot(runner, owner, exit, ownerVelocity);
 
-			exit = GetExitPoint();
-			SpawnNetworkShot(runner, owner, exit, ownerVelocity);
+			//exit = GetExitPoint();
+			//SpawnNetworkShot(runner, owner, exit, ownerVelocity);
 
-			exit = GetExitPoint();
-			SpawnNetworkShot(runner, owner, exit, ownerVelocity);
+			//exit = GetExitPoint();
+			//SpawnNetworkShot(runner, owner, exit, ownerVelocity);
 
 			fireTick = Runner.Simulation.Tick;
 		}
@@ -153,7 +153,11 @@ namespace FusionExamples.Tanknarok
 
 		private Transform GetExitPoint()
 		{
-			_gunExit = (_gunExit + 1) % _gunExits.Length;
+			// NOTE: use this line if you want variable exit points
+			// TODO:_gunExit = (_gunExit + 1) % _gunExits.Length;
+			
+			_gunExit = 0;
+
 			Transform exit = _gunExits[_gunExit];
 			return exit;
 		}

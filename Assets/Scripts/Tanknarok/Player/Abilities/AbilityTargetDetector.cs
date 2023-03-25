@@ -1,4 +1,5 @@
 
+using FusionExamples.Tanknarok.UI;
 using UnityEngine;
 
 namespace FusionExamples.Tanknarok.CharacterAbilities
@@ -7,9 +8,13 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
     {
         #region Inspector
 
-        [SerializeField] private float _radius = default;
+        [SerializeField] private float _radiusForward = default;
+        [SerializeField] private float _radiusDistance = default;
+        [SerializeField] private float _angle = default;
         [SerializeField] private float _detectionDelay = default;
         [SerializeField] private LayerMask _layer = default;
+        [SerializeField] private VisualTargetDetectorHelper _visualHelper = default;
+        [SerializeField] private bool _canDebug = false;
 
         #endregion
 
@@ -38,10 +43,17 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
             _targets = new Collider[0];
 
             _transform = transform;
+
+            if (_canDebug)
+            {
+                InitVisualHelper();
+            }
         }
 
         private void Update()
         {
+            DrawVisualHelper();
+
             _remainingTime -= Time.deltaTime;
 
             if (_remainingTime > 0) return;
@@ -57,24 +69,131 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
 
         public void UpdateMovementDirection(Vector3 direction)
         {
-            _moveDirection = direction;
+            _moveDirection = direction.normalized;
+        }
+
+        public bool TryGetTargetDirection(out Vector3 direction)
+        {
+            direction = Vector3.zero;
+
+            if (!TargetFound) return false;
+
+            direction = _target.transform.position - _transform.position;
+
+            return true;
         }
 
         #endregion
 
         #region Private methods
 
+        [ContextMenu("Refresh visual helper")]
+        private void RefreshVisualHelper()
+        {
+            _visualHelper.Refresh(_angle, _radiusForward);
+        }
+
+        [ContextMenu("Init visual helper")]
+        private void InitVisualHelper()
+        {
+            _visualHelper.Init(_angle, _radiusForward);
+        }
+
+        private void DrawVisualHelper()
+        {
+            if (!_canDebug) return;
+
+            _visualHelper.Tick(_moveDirection);
+        }
+
         private void GetClosestTarget()
         {
+            GameObject closestTarget = null;
+
+            // Check closest by inner circle
+            var found = CheckCircleArea(out closestTarget, _radiusDistance);
+
+            // Check closest by moving direction 
+            if (!found)
+            {
+                found = CheckConeArea(out closestTarget);
+            }
+
+            // Check closest by outter circle
+            if (!found)
+            {
+                found = CheckCircleArea(out closestTarget, _radiusForward);
+            }
+
+            // If anything is found stop detection
+            if (!found)
+            {
+                StopDetection();
+
+                return;
+            }
+
+            // If something was found, start detection
+            StartDetection(closestTarget);
+        }
+
+        private bool CheckConeArea(out GameObject closestTarget)
+        {
+            var found = false;
+            closestTarget = null;
+
             Vector3 currentPosition = _transform.position;
-            
-            _targets = Physics.OverlapSphere(currentPosition, _radius, _layer);
+            currentPosition.y = 0;
 
-            GameObject distanceClosestTarget = null;
-            GameObject angleClosestTarget = null;
+            var cos = Mathf.Cos(_angle * 0.5f * Mathf.Deg2Rad);
 
-            var foundDistanceClosest = false;
-            var foundAngleClosest = false;
+            var forwardDirection = (_moveDirection == Vector3.zero) ? _transform.forward : _moveDirection;
+
+            _targets = Physics.OverlapSphere(currentPosition, _radiusForward, _layer);
+
+            float closestDistanceSqr = Mathf.Infinity;
+
+            foreach (Collider potentialTarget in _targets)
+            {
+                var hit = potentialTarget.gameObject;
+
+                // Skip itself
+                if (hit.transform.parent == transform) continue;
+
+                if (!hit.transform.parent.TryGetComponent<TargeteableBase>(out var targeteable)) continue;
+
+                var targetPosition = hit.transform.position;
+                targetPosition.y = 0;
+
+                Vector3 directionToTarget = targetPosition - currentPosition;
+
+                if (directionToTarget.magnitude > _radiusForward) continue;
+
+                var dot = Vector3.Dot(directionToTarget.normalized, forwardDirection);
+
+                if (dot <= cos) continue;
+
+                float dSqrToTarget = directionToTarget.sqrMagnitude;
+
+                if (dSqrToTarget >= closestDistanceSqr) continue;
+
+                closestDistanceSqr = dSqrToTarget;
+                closestTarget = hit;
+
+                found = true;
+            }
+
+            return found;
+        }
+
+        private bool CheckCircleArea(out GameObject closestTarget, float radius)
+        {
+            closestTarget = null;
+            Vector3 currentPosition = _transform.position;
+
+            _targets = Physics.OverlapSphere(currentPosition, radius, _layer);
+
+            var found = false;
 
             float closestDistanceSqr = Mathf.Infinity;
 
@@ -91,43 +210,19 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
 
                 Vector3 directionToTarget = targetPosition - currentPosition;
 
-                Debug.DrawRay(currentPosition, directionToTarget * 8, Color.red);
+                //Debug.DrawRay(currentPosition, directionToTarget * 8, Color.red);
 
                 float dSqrToTarget = directionToTarget.sqrMagnitude;
-
-                /*
-                var angleWithTarget = Vector3.Angle(_moveDirection.normalized, targetPosition);
-
-                if (angleWithTarget < minAngle)
-                {
-                    angleClosestTarget = hit;
-                    minAngle = angleWithTarget;
-
-                    foundAngleClosest = true;
-                }
-
-                Debug.Log($" <color=yellow>{hit.transform.parent.name}</color> angle: <color=magenta>{angleWithTarget}</color>");
-                */
 
                 if (dSqrToTarget >= closestDistanceSqr) continue;
 
                 closestDistanceSqr = dSqrToTarget;
-                distanceClosestTarget = hit;
+                closestTarget = hit;
 
-                foundDistanceClosest = true;
+                found = true;
             }
 
-            if (!foundDistanceClosest && !foundAngleClosest)
-            {
-                StopDetection();
-
-                return;
-            }
-
-            // Priority is in the same direction it is moving
-            var target = (foundAngleClosest) ? angleClosestTarget : distanceClosestTarget;
-
-            StartDetection(target);
+            return found;
         }
 
         private void StopDetection()

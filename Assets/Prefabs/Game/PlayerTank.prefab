@@ -956,6 +956,7 @@ GameObject:
   - component: {fileID: 3407055641847980225}
   - component: {fileID: 7836245168118432685}
   - component: {fileID: 7098323488524843256}
+  - component: {fileID: 5976987294521589293}
   m_Layer: 8
   m_Name: PlayerTank
   m_TagString: Untagged
@@ -1346,11 +1347,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 321d55f7a949d2e4cb0f1c012f346899, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _radius: 10
+  _radiusForward: 15
+  _radiusDistance: 7
+  _angle: 60
   _detectionDelay: 0.1
   _layer:
     serializedVersion: 2
-    m_Bits: 2048
+    m_Bits: 2049
+  _visualHelper: {fileID: 5976987294521589293}
+  _canDebug: 0
 --- !u!114 &7098323488524843256
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1365,6 +1370,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: 100
   _indicator: {fileID: 2042803571118148763}
+--- !u!114 &5976987294521589293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7917003752575662290}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95d38e5b4caf1964095a271e6edb3c17, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8041608635261517176
 GameObject:
   m_ObjectHideFlags: 0

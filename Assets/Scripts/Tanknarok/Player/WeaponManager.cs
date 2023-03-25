@@ -106,7 +106,9 @@ namespace FusionExamples.Tanknarok
 				byte weaponIndex = weaponType == WeaponInstallationType.PRIMARY ? _activePrimaryWeapon : _activeSecondaryWeapon;
 				Weapon weapon = _weapons[weaponIndex];
 
-				weapon.Fire(Runner,Object.InputAuthority,_player.velocity);
+				var aimDirection = GetAimingDirection();
+
+				weapon.Fire(Runner,Object.InputAuthority, aimDirection);
 
 				if (!weapon.infiniteAmmo)
 					ammo--;
@@ -128,6 +130,18 @@ namespace FusionExamples.Tanknarok
 				}
 			}
 		}
+
+		private Vector3 GetAimingDirection()
+        {
+			var dir = _player.velocity;
+
+			if (_player.IsTargetDetected())
+            {
+				dir = _player.GetTargetDirection();
+            }
+
+			return dir;
+        }
 
 		private bool IsWeaponFireAllowed(WeaponInstallationType weaponType)
 		{

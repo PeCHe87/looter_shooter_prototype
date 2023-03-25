@@ -145,9 +145,9 @@ MonoBehaviour:
     areaImpulse: 40
     areaDamage: 10
     speed: 45
-    radius: 0.25
+    radius: 0.5
     gravity: -30
-    timeToLive: 1
+    timeToLive: 2
     timeToFade: 1
     ownerVelocityMultiplier: 1
   _networkedVelocity: {x: 0, y: 0, z: 0}

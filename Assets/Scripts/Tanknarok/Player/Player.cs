@@ -119,6 +119,7 @@ namespace FusionExamples.Tanknarok
 
         private DriveDirection _driveDirection = DriveDirection.FORWARD;
 
+		private Transform _transform = default;
 		private NetworkCharacterControllerPrototype _cc;
 		private Collider[] _overlaps = new Collider[1];
 		private Collider _collider;
@@ -169,6 +170,8 @@ namespace FusionExamples.Tanknarok
 
 		public override void Spawned()
 		{
+			_transform = transform;
+
 			if (Object.HasInputAuthority)
 				local = this;
 
@@ -240,7 +243,7 @@ namespace FusionExamples.Tanknarok
 			if (moveDirection.magnitude > 0.1f)
 				_lastMoveDirection = moveDirection;
 
-			targetDetector.UpdateMovementDirection(_lastMoveDirection);
+			targetDetector.UpdateMovementDirection(new Vector3(moveDirection.x, 0, moveDirection.y));
 		}
 
 		private void SetMaterial()
@@ -635,6 +638,18 @@ namespace FusionExamples.Tanknarok
 
 			Debug.DrawRay(playerPosition, _lastMoveDirection * 20, Color.yellow);
 		}
+
+		public bool IsTargetDetected()
+        {
+			return targetDetector.TargetFound;
+        }
+
+		public Vector3 GetTargetDirection()
+        {
+			var targetDetected = targetDetector.TryGetTargetDirection(out var dir);
+
+			return (targetDetected) ? dir : _transform.forward;
+        }
 
 		#endregion
 	}
