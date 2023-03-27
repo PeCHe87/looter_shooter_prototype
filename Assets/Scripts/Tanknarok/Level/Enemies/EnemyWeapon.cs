@@ -5,13 +5,14 @@ using UnityEngine;
 
 namespace FusionExamples.Tanknarok
 {
-	/// <summary>
-	/// The Weapon class controls how fast a weapon fires, which projectiles it uses
+    /// <summary>
+	/// The EnemyWeapon class controls how fast an enemy's weapon fires, which projectiles it uses
 	/// and the start position and direction of projectiles.
 	/// </summary>
+    public class EnemyWeapon : NetworkBehaviour
+    {
+		#region Inspector
 
-	public class Weapon : NetworkBehaviour
-	{
 		[SerializeField] private Transform[] _gunExits;
 		[SerializeField] private Projectile _projectilePrefab; // Networked projectile
 		[SerializeField] private float _rateOfFire;
@@ -22,20 +23,36 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private PowerupType _powerupType = PowerupType.DEFAULT;
 		[SerializeField] private ParticleSystem _muzzleFlashPrefab;
 
-		[Networked(OnChanged = nameof(OnFireTickChanged))]
+        #endregion
+
+        #region Networked properties
+
+        [Networked(OnChanged = nameof(OnFireTickChanged))]
 		private int fireTick { get; set; }
 
+		#endregion
+
+		#region Private properties
+
+		private NetworkRunner _runner = default;
 		private int _gunExit;
 		private float _visible;
 		private bool _active;
 		private List<ParticleSystem> _muzzleFlashList = new List<ParticleSystem>();
 
+		#endregion
+
+		#region Public properties
+
 		public float delay => _rateOfFire;
 		public bool isShowing => _visible >= 1.0f;
 		public byte ammo => _ammo;
 		public bool infiniteAmmo => _infiniteAmmo;
-
 		public PowerupType powerupType => _powerupType;
+
+		#endregion
+
+		#region Unity events
 
 		private void Awake()
 		{
@@ -48,6 +65,15 @@ namespace FusionExamples.Tanknarok
 				}
 			}
 		}
+
+		#endregion
+
+		#region Public methods
+
+		public void InitRunner(NetworkRunner runner)
+        {
+			_runner = runner;
+        }
 
 		/// <summary>
 		/// Control the visual appearance of the weapon. This is controlled by the Player based
@@ -74,6 +100,28 @@ namespace FusionExamples.Tanknarok
 				transform.localScale = Tween.easeInExpo(0, 1, _visible) * Vector3.one;
 		}
 
+		/// <summary>
+		/// Fire a weapon, spawning the bullet or, in the case of the hitscan, the visual
+		/// effect that will indicate that a shot was fired.
+		/// This is called in direct response to player input, but only on the server
+		/// (It's filtered at the source in Player)
+		/// </summary>
+		/// <param name="owner"></param>
+		/// <param name="ownerVelocity"></param>
+		public void Fire(PlayerRef owner, Vector3 ownerVelocity)
+		{
+			if (powerupType == PowerupType.EMPTY || _gunExits.Length == 0) return;
+
+			var exit = GetExitPoint();
+			SpawnNetworkShot(owner, exit, ownerVelocity);
+
+			//fireTick = _runner.Simulation.Tick;
+		}
+
+		#endregion
+
+		#region Private methods
+
 		private void ToggleActive(bool value)
 		{
 			_active = value;
@@ -91,32 +139,40 @@ namespace FusionExamples.Tanknarok
 		}
 
 		/// <summary>
-		/// Fire a weapon, spawning the bullet or, in the case of the hitscan, the visual
-		/// effect that will indicate that a shot was fired.
-		/// This is called in direct response to player input, but only on the server
-		/// (It's filtered at the source in Player)
+		/// Spawn a bullet prefab with prediction.
+		/// On the authoritative instance this is just a regular spawn (host in hosted mode or weapon owner in shared mode).
+		/// In hosted mode, the client with Input Authority will spawn a local predicted instance that will be linked to
+		/// the hosts network object when it arrives. This provides instant client-side feedback and seamless transition
+		/// to the consolidated state.
 		/// </summary>
-		/// <param name="runner"></param>
-		/// <param name="owner"></param>
-		/// <param name="ownerVelocity"></param>
-		public void Fire(NetworkRunner runner, PlayerRef owner, Vector3 ownerVelocity)
+		private void SpawnNetworkShot(PlayerRef owner, Transform exit, Vector3 ownerVelocity)
 		{
-			if (powerupType == PowerupType.EMPTY || _gunExits.Length == 0)
-				return;
-			
-			var exit = GetExitPoint();
-			SpawnNetworkShot(runner, owner, exit, ownerVelocity);
+			//Debug.Log($"Spawning Shot in tick {Runner.Simulation.Tick} stage={Runner.Simulation.Stage}");
 
-			//exit = GetExitPoint();
-			//SpawnNetworkShot(runner, owner, exit, ownerVelocity);
+			// Create a key that is unique to this shot on this client so that when we receive the actual NetworkObject
+			// Fusion can match it against the predicted local bullet.
+			var rawEncoded = (owner == null) ? -1 : owner.RawEncoded;
 
-			//exit = GetExitPoint();
-			//SpawnNetworkShot(runner, owner, exit, ownerVelocity);
-
-			fireTick = Runner.Simulation.Tick;
+			var key = new NetworkObjectPredictionKey { Byte0 = (byte)rawEncoded, Byte1 = (byte)_runner.Simulation.Tick };
+			_runner.Spawn(_projectilePrefab, exit.position, exit.rotation, owner, (runner, obj) =>
+			{
+				obj.GetComponent<Projectile>().InitNetworkState(ownerVelocity);
+			}, key);
 		}
 
-		public static void OnFireTickChanged(Changed<Weapon> changed)
+		private Transform GetExitPoint()
+		{
+			_gunExit = 0;
+
+			Transform exit = _gunExits[_gunExit];
+			return exit;
+		}
+
+		#endregion
+
+		#region Remote methods
+
+		public static void OnFireTickChanged(Changed<EnemyWeapon> changed)
 		{
 			changed.Behaviour.FireFx();
 		}
@@ -127,42 +183,11 @@ namespace FusionExamples.Tanknarok
 			if (_laserSight != null)
 				_laserSight.Recharge();
 
-			if(_gunExit<_muzzleFlashList.Count)
+			if (_gunExit < _muzzleFlashList.Count)
 				_muzzleFlashList[_gunExit].Play();
 			_audioEmitter.PlayOneShot();
 		}
 
-		/// <summary>
-		/// Spawn a bullet prefab with prediction.
-		/// On the authoritative instance this is just a regular spawn (host in hosted mode or weapon owner in shared mode).
-		/// In hosted mode, the client with Input Authority will spawn a local predicted instance that will be linked to
-		/// the hosts network object when it arrives. This provides instant client-side feedback and seamless transition
-		/// to the consolidated state.
-		/// </summary>
-		private void SpawnNetworkShot(NetworkRunner runner, PlayerRef owner, Transform exit, Vector3 ownerVelocity)
-		{
-			//Debug.Log($"Spawning Shot in tick {Runner.Simulation.Tick} stage={Runner.Simulation.Stage}");
-			
-			// Create a key that is unique to this shot on this client so that when we receive the actual NetworkObject
-			// Fusion can match it against the predicted local bullet.
-			var rawEncoded = (owner == null) ? -1 : owner.RawEncoded;
-
-			var key = new NetworkObjectPredictionKey {Byte0 = (byte) rawEncoded, Byte1 = (byte) runner.Simulation.Tick};
-			runner.Spawn(_projectilePrefab, exit.position, exit.rotation, owner, (runner, obj) =>
-			{
-				obj.GetComponent<Projectile>().InitNetworkState(ownerVelocity);
-			}, key );
-		}
-
-		private Transform GetExitPoint()
-		{
-			// NOTE: use this line if you want variable exit points
-			// TODO:_gunExit = (_gunExit + 1) % _gunExits.Length;
-			
-			_gunExit = 0;
-
-			Transform exit = _gunExits[_gunExit];
-			return exit;
-		}
+		#endregion
 	}
 }

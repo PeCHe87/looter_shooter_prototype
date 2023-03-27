@@ -4,6 +4,7 @@ using FusionExamples.UIHelpers;
 using Tanknarok.UI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace FusionExamples.Tanknarok
 {
@@ -12,6 +13,9 @@ namespace FusionExamples.Tanknarok
 	/// </summary>
 	public class GameLauncher : MonoBehaviour
 	{
+		[System.Serializable]
+		public enum TeamEnum { NONE = 0, BLUE = 1, RED = 2 }
+
 		[SerializeField] private GameManager _gameManagerPrefab;
 		[SerializeField] private Player _playerPrefab;
 		[SerializeField] private TMP_InputField _room;
@@ -21,16 +25,34 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private Panel _uiProgress;
 		[SerializeField] private Panel _uiRoom;
 		[SerializeField] private GameObject _uiGame;
+		[SerializeField] private TMP_InputField _txtDisplayName;
+		[SerializeField] private Button _btnTeamBlue;
+		[SerializeField] private Image _iconBlue;
+		[SerializeField] private Button _btnTeamRed;
+		[SerializeField] private Image _iconRed;
+		[SerializeField] private TextMeshProUGUI _txtError;
 
 		private FusionLauncher.ConnectionStatus _status = FusionLauncher.ConnectionStatus.Disconnected;
 		private GameMode _gameMode;
-		
+		private TeamEnum _team = TeamEnum.NONE;
+
 		private void Awake()
 		{
 			DontDestroyOnLoad(this);
+
+			_iconRed.enabled = false;
+			_iconBlue.enabled = false;
+			_btnTeamBlue.onClick.AddListener(() => { _team = TeamEnum.BLUE; _iconBlue.enabled = true; _iconRed.enabled = false; });
+			_btnTeamRed.onClick.AddListener( () => { _team = TeamEnum.RED; _iconBlue.enabled = false; _iconRed.enabled = true; } );
 		}
 
-		private void Start()
+        private void OnDestroy()
+        {
+			_btnTeamBlue.onClick.RemoveAllListeners();
+			_btnTeamRed.onClick.RemoveAllListeners();
+		}
+
+        private void Start()
 		{
 			OnConnectionStatusUpdate(null, FusionLauncher.ConnectionStatus.Disconnected, "");
 		}
@@ -77,6 +99,14 @@ namespace FusionExamples.Tanknarok
 
 		public void OnEnterRoom()
 		{
+			var passControl = CheckRequiredInputs();
+
+			if (!passControl) return;
+
+			PlayerPrefs.SetString("playerDisplayName", _txtDisplayName.text.ToUpperInvariant());
+			PlayerPrefs.SetInt("playerTeam", (int)_team);
+			PlayerPrefs.Save();
+
 			if (GateUI(_uiRoom))
 			{
 		    FusionLauncher launcher = FindObjectOfType<FusionLauncher>();
@@ -150,7 +180,7 @@ namespace FusionExamples.Tanknarok
 			void InitNetworkState(NetworkRunner runner, NetworkObject networkObject)
 			{
 				Player player = networkObject.gameObject.GetComponent<Player>();
-				Debug.Log($"Initializing player {player.playerID}");
+				Debug.LogError($"Initializing player {player.playerID}");
 				player.InitNetworkState(GameManager.MAX_LIVES);
 			}
 		}
@@ -202,6 +232,25 @@ namespace FusionExamples.Tanknarok
 			
 			if(intro)
 				MusicPlayer.instance.SetLowPassTranstionDirection( -1f);
+		}
+
+		private bool CheckRequiredInputs()
+        {
+			if (string.IsNullOrEmpty(_txtDisplayName.text))
+            {
+				_txtError.text = "Fill display name";
+				_txtError.enabled = true;
+				return false;
+            }
+
+			if (_team == TeamEnum.NONE)
+			{
+				_txtError.text = "Select a Team";
+				_txtError.enabled = true;
+				return false;
+			}
+
+			return true;
 		}
 	}
 }

@@ -726,7 +726,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6335094400671562540}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2824c1950e172434593d63aa5ea6abdf, type: 3}
   m_Name: 
@@ -1049,6 +1049,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   weaponManager: {fileID: 6203864925880487117}
+  _targeteableBase: {fileID: 7098323488524843256}
   _state: 0
   _life: 0
   _playerName:

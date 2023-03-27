@@ -14,6 +14,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private Collider _trigger;
 		[SerializeField] private GameObject _debrisPrefab;
 		[SerializeField] private LayerMask _destroyedByLayers;
+		[SerializeField] private bool _enabled = true;
 
 		private ParticleSystem _destroyedParticle;
 		private GameObject _debris;
@@ -24,6 +25,7 @@ namespace FusionExamples.Tanknarok
 		{
 			if (_destroyedParticlePrefab != null)
 				_destroyedParticle = Instantiate(_destroyedParticlePrefab, transform.position, transform.rotation, transform.parent);
+
 		}
 
 		// Using OnEnable to make the destructible recyclable
@@ -38,6 +40,8 @@ namespace FusionExamples.Tanknarok
 
 		private void OnTriggerEnter(Collider other)
 		{
+			if (!_enabled) return;
+
 			if ( ((1<<other.gameObject.layer) & _destroyedByLayers) !=0 )
 			{
 				DestroyObject();
@@ -48,7 +52,8 @@ namespace FusionExamples.Tanknarok
 		{
 			if (_audioEmitter != null)
 				_audioEmitter.PlayOneShot();
-			_destroyedParticle.Play();
+
+			_destroyedParticle?.Play();
 
 			_trigger.enabled = false;
 			_visual.SetActive(false);

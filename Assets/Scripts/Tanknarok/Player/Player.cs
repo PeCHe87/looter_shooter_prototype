@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Fusion;
 using FusionExamples.Tanknarok.CharacterAbilities;
 using UnityEngine;
+using static FusionExamples.Tanknarok.GameLauncher;
 
 namespace FusionExamples.Tanknarok
 {
@@ -36,6 +37,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private float _respawnTime;
 		[SerializeField] private LayerMask _pickupMask;
 		[SerializeField] private WeaponManager weaponManager;
+		[SerializeField] private TargeteableBase _targeteableBase = default;
 
         #endregion
 
@@ -70,12 +72,14 @@ namespace FusionExamples.Tanknarok
 
 		[Networked]
 		public NetworkBool ready { get; set; }
+		[Networked] public string displayName { get; set; }
+		[Networked] public TeamEnum team { get; set; }
 
-        #endregion
+		#endregion
 
-        #region Enums
+		#region Enums
 
-        public enum State
+		public enum State
 		{
 			New,
 			Despawned,
@@ -174,6 +178,20 @@ namespace FusionExamples.Tanknarok
 
 			if (Object.HasInputAuthority)
 				local = this;
+
+			var isLocal = Object.HasInputAuthority;
+
+			if (isLocal)
+            {
+				this.displayName = PlayerPrefs.GetString("playerDisplayName");
+				this.team = (TeamEnum)PlayerPrefs.GetInt("playerTeam");
+
+				Debug.LogError($"Player <color=yellow>{Id}</color>, name: <color=cyan>{displayName}</color>, team: <color=magenta>{team}</color>");
+            }
+
+			targetDetector.Init(isLocal);
+			
+			_targeteableBase.SetId(Id.ToString(), Object.HasInputAuthority);
 
 			_originalGravity = _cc.gravity;
 			_originalMaxSpeed = _cc.maxSpeed;

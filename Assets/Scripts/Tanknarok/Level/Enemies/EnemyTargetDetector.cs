@@ -1,10 +1,11 @@
 
 using FusionExamples.Tanknarok.UI;
+using System;
 using UnityEngine;
 
-namespace FusionExamples.Tanknarok.CharacterAbilities
+namespace FusionExamples.Tanknarok.Gameplay
 {
-    public class AbilityTargetDetector : MonoBehaviour
+    public class EnemyTargetDetector : MonoBehaviour
     {
         #region Inspector
 
@@ -13,8 +14,8 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
         [SerializeField] private float _angle = default;
         [SerializeField] private float _detectionDelay = default;
         [SerializeField] private LayerMask _layer = default;
+        [SerializeField] private LayerMask _obstacleLayer = default;
         [SerializeField] private VisualTargetDetectorHelper _visualHelper = default;
-        [SerializeField] private bool _canDebug = false;
 
         #endregion
 
@@ -24,9 +25,8 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
         private float _remainingTime = 0;
         private Collider[] _targets = default;
         private TargeteableBase _target = default;
+        private bool _initialized = false;
         private string _targetId = NO_TARGET_ID;
-        private Vector3 _moveDirection = default;
-        private bool _isLocal = false;
         private const string NO_TARGET_ID = "none";
 
         #endregion
@@ -38,25 +38,32 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
 
         #endregion
 
-        #region Unity events
+        #region Public mehtods
 
-        private void Start()
+        public void Init(float radiusDetection) 
         {
+            _radiusDistance = radiusDetection;
+
             _targets = new Collider[0];
 
             _transform = transform;
 
-            if (_canDebug)
-            {
-                InitVisualHelper();
-            }
+            InitVisualHelper();
+
+            _initialized = true;
         }
 
-        private void Update()
+        #endregion
+
+        #region Unity events
+
+        public void Tick(float deltaTime)
         {
+            if (!_initialized) return;
+
             DrawVisualHelper();
 
-            _remainingTime -= Time.deltaTime;
+            _remainingTime -= deltaTime;
 
             if (_remainingTime > 0) return;
 
@@ -67,51 +74,7 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
 
         #endregion
 
-        #region Public methods
-
-        public void Init(bool isLocal)
-        {
-            _isLocal = isLocal;
-        }
-
-        public void UpdateMovementDirection(Vector3 direction)
-        {
-            _moveDirection = direction.normalized;
-        }
-
-        public bool TryGetTargetDirection(out Vector3 direction)
-        {
-            direction = Vector3.zero;
-
-            if (!TargetFound) return false;
-
-            direction = _target.transform.position - _transform.position;
-
-            return true;
-        }
-
-        #endregion
-
         #region Private methods
-
-        [ContextMenu("Refresh visual helper")]
-        private void RefreshVisualHelper()
-        {
-            _visualHelper.Refresh(_angle, _radiusForward);
-        }
-
-        [ContextMenu("Init visual helper")]
-        private void InitVisualHelper()
-        {
-            _visualHelper.Init(_angle, _radiusForward);
-        }
-
-        private void DrawVisualHelper()
-        {
-            if (!_canDebug) return;
-
-            _visualHelper.Tick(_moveDirection);
-        }
 
         private void GetClosestTarget()
         {
@@ -144,6 +107,54 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
             StartDetection(closestTarget);
         }
 
+        private bool CheckCircleArea(out GameObject closestTarget, float radius)
+        {
+            closestTarget = null;
+            Vector3 currentPosition = _transform.position;
+
+            _targets = Physics.OverlapSphere(currentPosition, radius, _layer);
+
+            var found = false;
+
+            float closestDistanceSqr = Mathf.Infinity;
+
+            foreach (Collider potentialTarget in _targets)
+            {
+                var hit = potentialTarget.gameObject;
+
+                // Check if there isn't any collider between target and detector
+                var targetPosition = hit.transform.position;
+
+                Vector3 directionToTarget = targetPosition - currentPosition;
+
+                var somethingBlocking = Physics.Raycast(currentPosition, directionToTarget, _obstacleLayer);
+
+                if (somethingBlocking) continue;
+
+                // Skip itself
+                if (hit.transform.parent == transform) continue;
+
+                // Check if it is a player
+                if (!hit.transform.parent.TryGetComponent<Player>(out var player)) continue;
+
+                // Check if it is targeteable
+                if (!hit.transform.parent.TryGetComponent<TargeteableBase>(out var targeteable)) continue;
+
+                
+
+                float dSqrToTarget = directionToTarget.sqrMagnitude;
+
+                if (dSqrToTarget >= closestDistanceSqr) continue;
+
+                closestDistanceSqr = dSqrToTarget;
+                closestTarget = hit;
+
+                found = true;
+            }
+
+            return found;
+        }
+
         private bool CheckConeArea(out GameObject closestTarget)
         {
             var found = false;
@@ -154,7 +165,7 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
 
             var cos = Mathf.Cos(_angle * 0.5f * Mathf.Deg2Rad);
 
-            var forwardDirection = (_moveDirection == Vector3.zero) ? _transform.forward : _moveDirection;
+            var forwardDirection = _transform.forward;
 
             _targets = Physics.OverlapSphere(currentPosition, _radiusForward, _layer);
 
@@ -164,15 +175,22 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
             {
                 var hit = potentialTarget.gameObject;
 
-                // Skip itself
-                if (hit.transform.parent == transform) continue;
-
-                if (!hit.transform.parent.TryGetComponent<TargeteableBase>(out var targeteable)) continue;
-
                 var targetPosition = hit.transform.position;
                 targetPosition.y = 0;
 
                 Vector3 directionToTarget = targetPosition - currentPosition;
+
+                // Check obstacle in between
+                var somethingBlocking = Physics.Raycast(currentPosition, directionToTarget, _obstacleLayer);
+
+                // Skip itself
+                if (hit.transform.parent == transform) continue;
+
+                // Check if it is a player
+                if (!hit.transform.parent.TryGetComponent<Player>(out var player)) continue;
+
+                // Skip if it is not targeteable
+                if (!hit.transform.parent.TryGetComponent<TargeteableBase>(out var targeteable)) continue;
 
                 if (directionToTarget.magnitude > _radiusForward) continue;
 
@@ -193,53 +211,9 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
             return found;
         }
 
-        private bool CheckCircleArea(out GameObject closestTarget, float radius)
-        {
-            closestTarget = null;
-            Vector3 currentPosition = _transform.position;
-
-            _targets = Physics.OverlapSphere(currentPosition, radius, _layer);
-
-            var found = false;
-
-            float closestDistanceSqr = Mathf.Infinity;
-
-            foreach (Collider potentialTarget in _targets)
-            {
-                var hit = potentialTarget.gameObject;
-
-                // Skip itself
-                if (hit.transform.parent == transform) continue;
-
-                if (!hit.transform.parent.TryGetComponent<TargeteableBase>(out var targeteable)) continue;
-
-                var targetPosition = hit.transform.position;
-
-                Vector3 directionToTarget = targetPosition - currentPosition;
-
-                //Debug.DrawRay(currentPosition, directionToTarget * 8, Color.red);
-
-                float dSqrToTarget = directionToTarget.sqrMagnitude;
-
-                if (dSqrToTarget >= closestDistanceSqr) continue;
-
-                closestDistanceSqr = dSqrToTarget;
-                closestTarget = hit;
-
-                found = true;
-            }
-
-            return found;
-        }
-
         private void StopDetection()
         {
             if (_targetId.Equals(NO_TARGET_ID)) return;
-
-            if (_isLocal)
-            {
-                _target.HideIndicator();
-            }
 
             _target = null;
             _targetId = NO_TARGET_ID;
@@ -251,22 +225,23 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
 
             if (targetFound.Id.Equals(_targetId)) return;
 
-            if (!_targetId.Equals(NO_TARGET_ID))
-            {
-                if (_isLocal)
-                {
-                    _target.HideIndicator();
-                }
-            }
-
             _target = targetFound;
 
-            if (_isLocal)
-            {
-                _target.ShowIndicator();
-            }
-
             _targetId = _target.Id;
+        }
+
+        #endregion
+
+        #region Visual helper
+
+        private void InitVisualHelper()
+        {
+            _visualHelper.Init(_angle, _radiusForward);
+        }
+
+        private void DrawVisualHelper()
+        {
+            _visualHelper.Tick(_transform.forward);
         }
 
         #endregion
