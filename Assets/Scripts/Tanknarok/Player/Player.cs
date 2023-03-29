@@ -2,6 +2,7 @@ using System.Collections;
 using System.Threading.Tasks;
 using Fusion;
 using FusionExamples.Tanknarok.CharacterAbilities;
+using FusionExamples.Tanknarok.UI;
 using UnityEngine;
 using static FusionExamples.Tanknarok.GameLauncher;
 
@@ -29,6 +30,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private Material[] _playerMaterials;
 		[SerializeField] private TankTeleportInEffect _teleportIn;
 		[SerializeField] private TankTeleportOutEffect _teleportOut;
+		[SerializeField] private PlayerFloatingHud _hud = default;
 
 		[Space(10)] 
 		[SerializeField] private GameObject _deathExplosionPrefab;
@@ -72,8 +74,10 @@ namespace FusionExamples.Tanknarok
 
 		[Networked]
 		public NetworkBool ready { get; set; }
-		[Networked] public string displayName { get; set; }
-		[Networked] public TeamEnum team { get; set; }
+		[Networked(OnChanged = nameof(OnDisplayNameChanged))] 
+		public string displayName { get; set; }
+		[Networked(OnChanged = nameof(OnTeamChanged))] 
+		public TeamEnum team { get; set; }
 
 		#endregion
 
@@ -183,10 +187,10 @@ namespace FusionExamples.Tanknarok
 
 			if (isLocal)
             {
-				this.displayName = PlayerPrefs.GetString("playerDisplayName");
-				this.team = (TeamEnum)PlayerPrefs.GetInt("playerTeam");
+				var displayName = PlayerPrefs.GetString("playerDisplayName");
+				var team = (TeamEnum)PlayerPrefs.GetInt("playerTeam");
 
-				Debug.LogError($"Player <color=yellow>{Id}</color>, name: <color=cyan>{displayName}</color>, team: <color=magenta>{team}</color>");
+				RPC_SetInformation(displayName, team);
             }
 
 			targetDetector.Init(isLocal);
@@ -238,6 +242,10 @@ namespace FusionExamples.Tanknarok
 			}
 
 			CheckForPowerupPickup();
+
+			CheckForCollectablePickup();
+
+			CheckForDelivery();
 		}
 
 		/// <summary>
@@ -379,8 +387,10 @@ namespace FusionExamples.Tanknarok
 				if(GameManager.playState==GameManager.PlayState.LEVEL)
 					lives -= 1;
 
-				if (lives > 0)
+				//if (lives > 0)
 					Respawn( _respawnTime );
+
+				RefreshCollectablesOnDeath();
 
 				GameManager.instance.OnTankDeath();
 			}
@@ -668,6 +678,146 @@ namespace FusionExamples.Tanknarok
 
 			return (targetDetected) ? dir : _transform.forward;
         }
+
+		#endregion
+
+		#region Collecting
+
+		[SerializeField] private LayerMask _collectableMask = default;
+
+		private const int _maxCollectables = 100;
+
+		[Networked(OnChanged = nameof(OnCollectablesChanged))]
+		public int amountCollectables { get; set; }
+
+		private void CheckForCollectablePickup()
+		{
+			if (this.amountCollectables >= _maxCollectables) return;
+
+			// If we run into a collectable, pick it up
+			if (isActivated && Runner.GetPhysicsScene().OverlapSphere(transform.position, _pickupRadius, _overlaps, _collectableMask, QueryTriggerInteraction.Collide) > 0)
+			{
+				PickupCollectable(_overlaps[0].GetComponent<BaseCollectable>());
+			}
+		}
+
+		/// <summary>
+		/// Called when a player collides with a collectable.
+		/// </summary>
+		public void PickupCollectable(BaseCollectable collectable)
+		{
+			if (!collectable) return;
+
+			var amount = collectable.Amount;
+
+			var canPickup = collectable.Pickup();
+
+			if (!canPickup) return;
+
+			this.amountCollectables += amount;
+
+			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
+		}
+
+		public static void OnCollectablesChanged(Changed<Player> changed)
+		{
+			if (!changed.Behaviour) return;
+
+ 		    changed.Behaviour.OnCollectablesChanged();
+		}
+
+		private void OnCollectablesChanged()
+        {
+			if (Object.HasStateAuthority) return;
+
+			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
+		}
+
+		private void RefreshCollectablesOnDeath()
+        {
+			this.amountCollectables = 0;
+
+			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
+		}
+
+		#endregion
+
+		#region Delivery methods
+
+		[SerializeField] private LayerMask _deliveryAreaMask = default;
+
+		private void CheckForDelivery()
+		{
+			if (this.amountCollectables == 0) return;
+
+			// If we run into a collectable, pick it up
+			if (isActivated && Runner.GetPhysicsScene().OverlapSphere(transform.position, _pickupRadius, _overlaps, _deliveryAreaMask, QueryTriggerInteraction.Collide) > 0)
+			{
+				Deliver(_overlaps[0].GetComponent<BaseDeliveryArea>());
+			}
+		}
+
+		/// <summary>
+		/// Called when player collides with a delivery area.
+		/// </summary>
+		public void Deliver(BaseDeliveryArea deliveryArea)
+		{
+			if (!deliveryArea) return;
+
+			var canDeliver = deliveryArea.Interact(this.team, this.amountCollectables);
+
+			if (!canDeliver) return;
+
+			Debug.LogError($"Deliver <color=yellow>{this.amountCollectables}</color>");
+
+			this.amountCollectables = 0;
+
+			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
+		}
+
+		#endregion
+
+		#region Remote methods
+
+		[Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+		public void RPC_SetInformation(string displayName, TeamEnum team, RpcInfo info = default)
+		{
+			this.displayName = displayName;
+			this.team = team;
+
+			_hud.SetDisplayName(this.displayName);
+			_hud.SetTeam(this.team);
+		}
+
+		public static void OnDisplayNameChanged(Changed<Player> changed)
+		{
+			if (!changed.Behaviour) return;
+
+			var displayName = changed.Behaviour.displayName;
+
+			changed.Behaviour.OnDisplayNameChanged(displayName);
+		}
+
+		private void OnDisplayNameChanged(string displayName)
+        {
+			_hud.SetDisplayName(this.displayName);
+
+			Debug.LogError($"REMOTE display name from id: <color=yellow>{this.Id}</color> is '<color=cyan>{this.displayName}</color>' assigned ({displayName})");
+        }
+
+		public static void OnTeamChanged(Changed<Player> changed)
+		{
+			if (!changed.Behaviour) return;
+
+			var team = (TeamEnum)changed.Behaviour.team;
+
+			changed.Behaviour.OnTeamChanged(team);
+		}
+
+		private void OnTeamChanged(TeamEnum team)
+		{
+			_hud.SetTeam(this.team);
+		}
 
 		#endregion
 	}

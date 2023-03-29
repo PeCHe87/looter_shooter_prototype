@@ -59,7 +59,6 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    m_Ints: []
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
@@ -84,7 +83,7 @@ Material:
     - _WSInnerFudge: 0
     - _WSMapHeight: 17.7
     - _WSMapWidth: 26.35
-    - _WSOuterFudge: 1.2
+    - _WSOuterFudge: 2
     - _WSVerticalThreshold: 10
     - _ZWrite: 1
     m_Colors:

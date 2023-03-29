@@ -18,6 +18,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private LevelBehaviour _currentLevel;
 		[SerializeField] private CameraScreenFXBehaviour _transitionEffect;
 		[SerializeField] private AudioEmitter _audioEmitter;
+		[SerializeField] private Camera _camera = default;
 		
 		private Scene _loadedScene;
 		private ScoreManager _scoreManager;
@@ -25,6 +26,7 @@ namespace FusionExamples.Tanknarok
 		private CountdownManager _countdownManager;
 
 		public FusionLauncher launcher { get; set; }
+		public Camera Camera => _camera;
 
 		private void Awake()
 		{

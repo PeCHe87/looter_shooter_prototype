@@ -28,6 +28,17 @@ namespace FusionExamples.Tanknarok
 			_teleportEffect.Stop();
 		}
 
+		public void Initialize(Color color)
+		{
+			_dummyTankTurret = _dummyTank.transform.Find("EnergyTankOut_Turret");
+			_dummyTankHull = _dummyTank.transform.Find("EnergyTankOut_Hull");
+			_dummyTank.SetActive(false);
+
+			ColorChanger.ChangeColor(transform, color);
+
+			_teleportEffect.Stop();
+		}
+
 		public void StartTeleport()
 		{
 			if(_audioEmitter.isActiveAndEnabled)

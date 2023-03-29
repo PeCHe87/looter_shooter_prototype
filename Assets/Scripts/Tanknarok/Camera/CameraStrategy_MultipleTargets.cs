@@ -14,8 +14,8 @@ namespace FusionExamples.Tanknarok
 		[Header("Camera Settings")] private float cameraTiltAngle = 55f;
 
 		private float _longestDistance;
-		private float _maxDist = 64f;
-		private float _minDist = 50f;
+		[SerializeField] private float _maxDist = 64f;
+		[SerializeField] private float _minDist = 50f;
 
 		private float _distanceMultiplier = 1f;
 		private float _maxDistanceMultiplier = 1.4f;
@@ -59,6 +59,7 @@ namespace FusionExamples.Tanknarok
 		void UpdateCamera()
 		{
 			CalculateAverages();
+			
 			CalculateOffset();
 
 			_averageTarget = _cameraBounds.StayWithinBounds(_averageTarget, _offset, cameraTiltAngle, _longestDistance, _myCamera.transform);
@@ -105,7 +106,7 @@ namespace FusionExamples.Tanknarok
 
 			//Go through each target and calculate its distance to the targets average position and add it to the distance variable
 			int count = 0;
-			for (int i = 0; i < _targets.Count; i++)
+			for (int i = 0; i < 1; i++)	//for (int i = 0; i < _targets.Count; i++)
 			{
 				GameObject targetGameObject = _targets[i];
 
