@@ -1832,7 +1832,7 @@ MonoBehaviour:
   acceleration: 100
   braking: 7
   maxSpeed: 8
-  rotationSpeed: 15
+  rotationSpeed: 8
   _IsGrounded: 0
   _Velocity: {x: 0, y: 0, z: 0}
 --- !u!114 &7836245168118432685

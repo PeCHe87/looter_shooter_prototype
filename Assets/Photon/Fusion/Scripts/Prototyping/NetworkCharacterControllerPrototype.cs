@@ -149,7 +149,7 @@ public class NetworkCharacterControllerPrototype : NetworkTransform {
         moveVelocity.x = horizontalVel.x;
         moveVelocity.z = horizontalVel.z;
 
-        ProcessRotation((processAiming) ? aimDirection : direction);
+        ProcessRotation((processAiming) ? aimDirection : direction, processAiming);
 
         Controller.Move(moveVelocity * deltaTime);
 
@@ -157,9 +157,11 @@ public class NetworkCharacterControllerPrototype : NetworkTransform {
         IsGrounded = Controller.isGrounded;
     }
 
-    private void ProcessRotation(Vector3 dir)
+    private void ProcessRotation(Vector3 dir, bool targetFound)
     {
         if (dir == Vector3.zero) return;
+
+        var modifiedRotationSpeed = (targetFound) ? rotationSpeed * 2 : rotationSpeed;
 
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), rotationSpeed * Runner.DeltaTime);
     }
