@@ -526,7 +526,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5215446329232089975}
   - component: {fileID: 5215446329232089974}
-  - component: {fileID: 8431707859894117345}
   - component: {fileID: 6319320284992378916}
   - component: {fileID: 469758548767905139}
   - component: {fileID: 545491522590401608}
@@ -538,6 +537,8 @@ GameObject:
   - component: {fileID: -4705907038909264343}
   - component: {fileID: 3879696694303902633}
   - component: {fileID: 8839663782345406114}
+  - component: {fileID: 4256866187803969118}
+  - component: {fileID: 1940856606388361799}
   m_Layer: 11
   m_Name: BaseEnemy
   m_TagString: Untagged
@@ -574,27 +575,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: 1
   _indicator: {fileID: 5215446329894202251}
---- !u!114 &8431707859894117345
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5215446329232089960}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 93f13577b07071a419d5b103257307a8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _destroyedParticlePrefab: {fileID: 198616896704594468, guid: fb7f4cd27fdee94488da2453eb50811b, type: 3}
-  _visual: {fileID: 62884499785338351}
-  _trigger: {fileID: 4701082961723902123}
-  _debrisPrefab: {fileID: 1348902072512610, guid: 05cc2d419f9041b4e8f2119243c7be81, type: 3}
-  _destroyedByLayers:
-    serializedVersion: 2
-    m_Bits: 1280
-  _enabled: 0
-  _audioEmitter: {fileID: 0}
 --- !u!54 &6319320284992378916
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -734,6 +714,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23c86fded48c61843a06e91f5a54aef3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _interpolationDataSource: 0
   _levelManager: {fileID: 0}
   _id: 
   _status: 0
@@ -745,6 +726,10 @@ MonoBehaviour:
   _radiusDetection: 20
   _attackDistance: 10
   _attackRate: 2
+  _art: {fileID: 5215446328374483506}
+  _minHp: 100
+  _maxHp: 200
+  __netHealth: 0
 --- !u!195 &2128597943662367100
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -754,7 +739,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 5215446329232089960}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 0.5
+  m_Radius: 2
   m_Speed: 3.5
   m_Acceleration: 8
   avoidancePriority: 50
@@ -763,7 +748,7 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 2
+  m_Height: 3
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
@@ -876,10 +861,49 @@ MonoBehaviour:
     RawGuidValue: 395b2382618173c4588004c2ffeb8722
   NestedObjects: []
   NetworkedBehaviours:
+  - {fileID: 3768568817012621117}
   - {fileID: 6338577766979496998}
   - {fileID: 3879696694303902633}
+  - {fileID: 4256866187803969118}
   - {fileID: 1237900536794154119}
   SimulationBehaviours: []
+--- !u!114 &4256866187803969118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5215446329232089960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1039544458, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _interpolationDataSource: 0
+  Config: 1
+  BroadRadius: 2
+  Offset: {x: 0, y: 1.5, z: 0}
+  GizmosColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  Hitboxes:
+  - {fileID: 0}
+--- !u!114 &1940856606388361799
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5215446329232089960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1014831617, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Type: 2
+  SphereRadius: 1.5
+  BoxExtents: {x: 0.7, y: 0.53, z: 0.8}
+  Offset: {x: 0, y: 1.5, z: 0}
+  Root: {fileID: 0}
+  GizmosColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &5215446329894202251
 GameObject:
   m_ObjectHideFlags: 0

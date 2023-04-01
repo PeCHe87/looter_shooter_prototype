@@ -33,7 +33,7 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
 
         #region Public properties
 
-        public bool TargetFound => !_targetId.Equals(NO_TARGET_ID);
+        public bool TargetFound => _target != null;  //!_targetId.Equals(NO_TARGET_ID);
         public TargeteableBase Target => _target;
 
         #endregion
@@ -236,7 +236,7 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
         {
             if (_targetId.Equals(NO_TARGET_ID)) return;
 
-            if (_isLocal)
+            if (_isLocal && TargetFound)
             {
                 _target.HideIndicator();
             }
@@ -253,7 +253,7 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
 
             if (!_targetId.Equals(NO_TARGET_ID))
             {
-                if (_isLocal)
+                if (_isLocal && TargetFound)
                 {
                     _target.HideIndicator();
                 }

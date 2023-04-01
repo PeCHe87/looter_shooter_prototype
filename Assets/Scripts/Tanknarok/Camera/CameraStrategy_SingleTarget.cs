@@ -2,7 +2,10 @@
 
 namespace FusionExamples.Tanknarok
 {
-	public class CameraStrategy_MultipleTargets : CameraStrategy
+	/// <summary>
+	/// This camera strategy is to follow only one target, the local player
+	/// </summary>
+	public class CameraStrategy_SingleTarget : CameraStrategy
 	{
 		// Defining the size of the arena, easily accessable by anyone who needs it
 		public const float ARENA_X = 26.35f;
@@ -13,7 +16,6 @@ namespace FusionExamples.Tanknarok
 
 		[Header("Camera Settings")] private float cameraTiltAngle = 55f;
 
-		private float _longestDistance;
 		[SerializeField] private float _maxDist = 64f;
 		[SerializeField] private float _minDist = 50f;
 
@@ -38,7 +40,6 @@ namespace FusionExamples.Tanknarok
 			Initialize();
 		}
 
-		// Use this for initialization
 		public override void Initialize()
 		{
 			base.Initialize();
@@ -63,7 +64,8 @@ namespace FusionExamples.Tanknarok
 			
 			CalculateOffset();
 
-			_averageTarget = _cameraBounds.StayWithinBounds(_averageTarget, _offset, cameraTiltAngle, _longestDistance, _myCamera.transform);
+			_averageTarget = _cameraBounds.StayWithinBounds(_averageTarget, _offset, cameraTiltAngle, _maxDist, _myCamera.transform);
+
 			if (_targets.Count == 1 && _targets[0] != null)
 			{
 				float arenaYMultiplier = Mathf.Clamp01(_targets[0].transform.position.z / ARENA_Y);
@@ -74,7 +76,6 @@ namespace FusionExamples.Tanknarok
 			UpdatePositionAndRotation();
 		}
 
-		// Update is called once per frame
 		public void LateUpdate()
 		{
 			UpdateCamera();
@@ -83,51 +84,35 @@ namespace FusionExamples.Tanknarok
 		void CalculateAverages()
 		{
 			//Reset the distance
-			_longestDistance = 0f;
 			float yDifference = 0f;
 
 			//Reset the average target variable
 			_averageTarget = Vector3.zero;
 			Vector3 weightedAverageTarget = Vector3.zero;
 
-			//If there are no targets in the target list, then set the distance to 10
-			if (_targets.Count == 0)
-			{
-				_longestDistance = _maxDist;
-				return;
-			}
-
 			Vector3 furtestAwayPosition = Vector3.zero;
 
 			_activeTargets.Clear();
 
-			float minY = Mathf.Infinity;
-			float maxZ = -Mathf.Infinity;
-			float averageZ = 0;
-
 			//Go through each target and calculate its distance to the targets average position and add it to the distance variable
-			int count = 0;
 			for (int i = 0; i < _targets.Count; i++)
 			{
+				var isLocal = false;
+
 				GameObject targetGameObject = _targets[i];
 
 				// Detect the local player
-				//if (_localPlayer == null)
-                //{
-					if (targetGameObject.TryGetComponent<Player>(out var player))
-                    {
-						if (player.IsLocal)
-						{
-							_localPlayer = targetGameObject.transform;
-						}
-                    }
-                //}
+				if (targetGameObject.TryGetComponent<Player>(out var player))
+                {
+					if (player.IsLocal)
+					{
+						_localPlayer = targetGameObject.transform;
+					}
+                }
 
-				if (targetGameObject != null) // && targetGameObject == _localPlayer)
+				if (targetGameObject != null) 
 				{
-					var isLocal = targetGameObject.transform == _localPlayer;
-
-					//Debug.LogError($"Player: <color=yellow>{targetGameObject}</color>, is local: <color=cyan>{isLocal}</color>");
+					isLocal = targetGameObject.transform == _localPlayer;
 
 					if (!isLocal) continue;
 
@@ -138,65 +123,17 @@ namespace FusionExamples.Tanknarok
 
 					//Add target position to average target - gets divided later
 					_averageTarget += targetTransform.position;
-
-					//Loop through the target list again and check distances and y differences
-					for (int j = i; j < _targets.Count; j++)
-					{
-						GameObject subTargetGameObject = _targets[j];
-						if (subTargetGameObject != targetGameObject)
-						{
-							//Find the tanks with the longest distance between them
-							float targetDistance = Vector3.Distance(targetTransform.position, _targets[j].transform.position);
-							if (targetDistance > _longestDistance)
-							{
-								_longestDistance = targetDistance;
-							}
-
-							//Compensate for Y Difference between all tanks
-							float yDiff = Mathf.Abs((targetTransform.position.z - _targets[j].transform.position.z));
-							if (yDifference < yDiff)
-							{
-								yDifference = yDiff;
-							}
-
-							//Keep track of max and min positions on the z-axis 
-							//for moving the boundsCenter around
-							float zPos = targetTransform.position.z;
-							if (zPos > maxZ)
-								maxZ = zPos;
-							if (zPos < minY)
-								minY = zPos;
-							averageZ += zPos;
-
-							count++;
-						}
-					}
-
-					//break;
 				}
+
+				if (isLocal) break;
 			}
 
 			// Compensate the camera position when driving above the center of the arena
 			_distanceMultiplier = Mathf.Clamp(yDifference / (_cameraBounds.Bounds.z * 2), 0, 1f);
-			if (averageZ >= 0)
-			{
-				float clampedAverage = Mathf.Clamp(averageZ / _cameraBounds.Bounds.z, 0, 1);
-
-				_cameraBounds.SetBoundsMovementMultiplier = Mathf.Clamp((averageZ) / (_cameraBounds.Bounds.z), 0, 1);
-			}
 
 			_distanceMultiplier = Remap(_distanceMultiplier, 0, 1, 1, _maxDistanceMultiplier);
 
-			if (_targets.Count == 1)
-			{
-				_longestDistance = _maxDist;
-			}
-			else
-				_longestDistance += _minDist;
-
-			float addOnDistance = (_longestDistance / _cameraBounds.Diagonal) * ((_maxDist * _distanceMultiplier) - _minDist);
-			_longestDistance += (addOnDistance);
-
+			/*
 			//If target count is greater 3 or more, then we need to use a weighted target position to try to keep all players on the screen 
 			if (_activeTargets.Count > 2)
 			{
@@ -242,7 +179,9 @@ namespace FusionExamples.Tanknarok
 				_weightedTargetGizmoPosition = _averageTarget;
 			}
 			//If there is only 1-2 players, we just use straight up average positioning
-			else if (_activeTargets.Count > 0)
+			else 
+			*/
+			if (_activeTargets.Count > 0)
 			{
 				_averageTarget = _averageTarget / _activeTargets.Count;
 			}
@@ -261,8 +200,8 @@ namespace FusionExamples.Tanknarok
 		void CalculateOffset()
 		{
 			float modifiedAngle = cameraTiltAngle - 90;
-			float zOffset = (Mathf.Sin(modifiedAngle * Mathf.Deg2Rad) * _longestDistance);
-			float yOffset = (Mathf.Cos(modifiedAngle * Mathf.Deg2Rad) * _longestDistance);
+			float zOffset = (Mathf.Sin(modifiedAngle * Mathf.Deg2Rad) * _maxDist);
+			float yOffset = (Mathf.Cos(modifiedAngle * Mathf.Deg2Rad) * _maxDist);
 			_offset = new Vector3(0, yOffset, zOffset);
 		}
 
@@ -287,11 +226,6 @@ namespace FusionExamples.Tanknarok
 		public void CameraShake(float impact = 1f)
 		{
 			ScreenShaker.AddTrauma(impact);
-		}
-
-		public Vector3 GetAverageTarget()
-		{
-			return _averageTarget;
 		}
 
 		private void OnDrawGizmos()

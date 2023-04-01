@@ -6,7 +6,7 @@ using UnityEngine.AI;
 namespace FusionExamples.Tanknarok.Gameplay
 {
     [RequireComponent(typeof(NavMeshAgent))]
-    public class BaseEnemy : MonoBehaviour
+    public class BaseEnemy : NetworkBehaviour, ICanTakeDamage
     {
         #region Inspector
 
@@ -21,6 +21,9 @@ namespace FusionExamples.Tanknarok.Gameplay
         [SerializeField] private float _radiusDetection = default;
         [SerializeField] private float _attackDistance = 2f;
         [SerializeField] private float _attackRate = 1;
+        [SerializeField] private GameObject _art = default;
+        [SerializeField] private int _minHp = default;
+        [SerializeField] private int _maxHp = default;
 
         #endregion
 
@@ -38,34 +41,6 @@ namespace FusionExamples.Tanknarok.Gameplay
 
         #region Unity events
 
-        private void Awake()
-        {
-            _transform = transform;
-
-            _targeteable = GetComponent<TargeteableBase>();
-            _targeteable.SetId(_id, false);
-
-            _agent = GetComponent<NavMeshAgent>();
-            _agent.speed = _speedMovement;
-        }
-
-        private void Start()
-        {
-            _levelManager = FindObjectOfType<LevelManager>();
-
-            _attackDistanceSqr = Mathf.Pow(_attackDistance, 2);
-
-            _detectionAbility = GetComponent<EnemyTargetDetector>();
-            _detectionAbility.Init(_radiusDetection);
-
-            _attackAbility = GetComponent<EnemyAttackAbility>();
-            _attackAbility.Init(_levelManager.Runner, _id, _attackRate, _attackDistance);
-
-            _status = EnemyStatus.IDLE;
-
-            _initialized = true;
-        }
-
         private void Update()
         {
             if (!_initialized) return;
@@ -80,6 +55,47 @@ namespace FusionExamples.Tanknarok.Gameplay
             CheckChaseStatus();
 
             CheckAttackStatus();
+        }
+
+        #endregion
+
+        #region Network methods
+
+        public override void Spawned()
+        {
+            _transform = transform;
+
+            _targeteable = GetComponent<TargeteableBase>();
+            _targeteable.SetId(_id, false);
+
+            _agent = GetComponent<NavMeshAgent>();
+            _agent.speed = _speedMovement;
+
+            if (TryGetComponent<Destructible>(out var destructible))
+            {
+                destructible.OnDestroyed += Death;
+            }
+
+            _levelManager = FindObjectOfType<LevelManager>();
+
+            _attackDistanceSqr = Mathf.Pow(_attackDistance, 2);
+
+            _detectionAbility = GetComponent<EnemyTargetDetector>();
+            _detectionAbility.Init(_radiusDetection);
+
+            _attackAbility = GetComponent<EnemyAttackAbility>();
+            _attackAbility.Init(_levelManager.Runner, _id, _attackRate, _attackDistance);
+
+            _status = EnemyStatus.IDLE;
+
+            if (Object.HasStateAuthority)
+            {
+                _netHealth = (byte)UnityEngine.Random.Range(_minHp, _maxHp + 1);
+
+                Debug.LogError($"BaseEnemy::Spawned -> initial HP: <color=yellow>{_netHealth}</color>");
+            }
+
+            _initialized = true;
         }
 
         #endregion
@@ -190,6 +206,50 @@ namespace FusionExamples.Tanknarok.Gameplay
             _attackAbility.StopAttacking();
 
             _status = EnemyStatus.IDLE;
+        }
+
+        #endregion
+
+        #region Health methods
+
+        [Networked] public byte _netHealth { get; set; }
+
+        public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef source)
+        {
+            if (_status == EnemyStatus.DEAD) return;
+
+            _netHealth = (byte)Mathf.Clamp(_netHealth - damage, 0, _maxHp);
+
+            //Debug.LogError($"BaseEnemy::ApplyDamage -> hp: <color=yellow>{_netHealth}</color>, damage: <color=cyan>{damage}</color>, is dead: <color=yellow>{_netHealth == 0}</color>");
+
+            if (_netHealth == 0)
+            {
+                Death();
+            }
+        }
+
+        private void Death()
+        {
+            _initialized = false;
+
+            StopAttacking();
+
+            StopChasing();
+
+            _status = EnemyStatus.DEAD;
+
+            _art.Toggle(false);
+
+            Destroy(gameObject, 1);
+        }
+
+        #endregion
+
+        #region Public methods
+
+        public void SetId(string id)
+        {
+            _id = id;
         }
 
         #endregion

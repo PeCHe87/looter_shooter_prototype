@@ -180,7 +180,7 @@ namespace FusionExamples.Tanknarok
 			void InitNetworkState(NetworkRunner runner, NetworkObject networkObject)
 			{
 				Player player = networkObject.gameObject.GetComponent<Player>();
-				Debug.LogError($"Initializing player {player.playerID}");
+
 				player.InitNetworkState(GameManager.MAX_LIVES);
 			}
 		}

@@ -9,6 +9,8 @@ namespace FusionExamples.Tanknarok
 	
 	public class Destructible : MonoBehaviour
 	{
+		public System.Action OnDestroyed;
+
 		[SerializeField] private ParticleSystem _destroyedParticlePrefab;
 		[SerializeField] private GameObject _visual;
 		[SerializeField] private Collider _trigger;
@@ -60,6 +62,8 @@ namespace FusionExamples.Tanknarok
 
 			if (_debrisPrefab != null)
 				_debris = Instantiate(_debrisPrefab, transform.parent);
+
+			OnDestroyed?.Invoke();
 		}
 	}
 }

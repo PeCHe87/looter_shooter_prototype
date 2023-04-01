@@ -4,6 +4,7 @@ using Fusion;
 using FusionExamples.FusionHelpers;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static FusionExamples.Tanknarok.GameLauncher;
 using Random = UnityEngine.Random;
 
 namespace FusionExamples.Tanknarok
@@ -20,6 +21,8 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private AudioEmitter _audioEmitter;
 		[SerializeField] private Camera _camera = default;
 		
+		[SerializeField] private float _spawnRadius = 10;
+
 		private Scene _loadedScene;
 		private ScoreManager _scoreManager;
 		private ReadyupManager _readyupManager;
@@ -64,6 +67,15 @@ namespace FusionExamples.Tanknarok
 			if (_currentLevel!=null)
 				return _currentLevel.GetPlayerSpawnPoint(playerID);
 			return null;
+		}
+
+		public Vector3 GetPlayerSpawnPoint(TeamEnum team)
+		{
+			var point = (team == TeamEnum.BLUE) ? _currentLevel.SpawnPointBlue.position : _currentLevel.SpawnPointRed.position;
+
+			var position = Utils.GetPositionAroundPoint(point, _spawnRadius);
+
+			return new Vector3(position.x, 0, position.y);
 		}
 
 		public void LoadLevel(int nextLevelIndex)

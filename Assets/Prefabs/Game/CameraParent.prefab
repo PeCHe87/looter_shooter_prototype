@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2652913063199298840}
-  - component: {fileID: 2652913063199298841}
+  - component: {fileID: 3901286689317181566}
   - component: {fileID: 2652913063199298842}
   - component: {fileID: 2652913063199298843}
   - component: {fileID: 3110275275162812071}
@@ -35,7 +35,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2652913063199298841
+--- !u!114 &3901286689317181566
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -44,10 +44,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 2652913063199298836}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c86add17dbb632b46a4a2d4aebd632be, type: 3}
+  m_Script: {fileID: 11500000, guid: 7988cc80f562d7e4a926a90807bddee1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _moveSpeed: 2
+  _maxDist: 70
+  _minDist: 70
   _cameraBounds: {fileID: 2652913063199298842}
   singleTargetYadditionalOffset: 5
 --- !u!114 &2652913063199298842
@@ -62,7 +64,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bee04d4c66fedcf4cb862c0b69e17c61, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bounds: {x: 20, y: 0, z: 11}
+  bounds: {x: 40, y: 0, z: 40}
   boundsOffset: {x: 0, y: 0, z: -3}
   boundsMovementMax: 2
 --- !u!114 &2652913063199298843
@@ -233,8 +235,8 @@ MonoBehaviour:
       colorBlindnessType: 0
       colorBlindnessStrength: 1
   m_Resources: {fileID: 11400000, guid: d82512f9c8e5d4a4d938b575d47f88d4, type: 2}
-  m_ShowToolkit: 0
-  m_ShowCustomSorter: 0
+  m_ShowToolkit: 1
+  m_ShowCustomSorter: 1
   breakBeforeColorGrading: 0
   m_BeforeTransparentBundles: []
   m_BeforeStackBundles: []

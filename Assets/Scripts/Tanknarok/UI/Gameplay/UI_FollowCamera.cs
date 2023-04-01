@@ -37,7 +37,7 @@ namespace FusionExamples.Tanknarok.UI
             _initialized = true;
         }
 
-        private void Update()
+        private void LateUpdate()
         {
             if (!_initialized) return;
 

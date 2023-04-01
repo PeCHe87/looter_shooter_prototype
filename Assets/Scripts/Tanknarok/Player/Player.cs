@@ -120,6 +120,7 @@ namespace FusionExamples.Tanknarok
 
 		public Quaternion hullRotation => _hull.rotation;
 		public Vector3 MoveDirection => this.moveDirection;
+		public bool IsLocal => _isLocal;
 
         #endregion
 
@@ -127,6 +128,7 @@ namespace FusionExamples.Tanknarok
 
         private DriveDirection _driveDirection = DriveDirection.FORWARD;
 
+		private bool _isLocal = false;
 		private Transform _transform = default;
 		private NetworkCharacterControllerPrototype _cc;
 		private Collider[] _overlaps = new Collider[1];
@@ -187,6 +189,7 @@ namespace FusionExamples.Tanknarok
 
 			if (isLocal)
             {
+				_isLocal = isLocal;
 				var displayName = PlayerPrefs.GetString("playerDisplayName");
 				var team = (TeamEnum)PlayerPrefs.GetInt("playerTeam");
 
@@ -415,8 +418,10 @@ namespace FusionExamples.Tanknarok
 		{
 			if(_respawnInSeconds>0)
 				_respawnInSeconds -= Runner.DeltaTime;
-			SpawnPoint spawnpt = GetLevelManager().GetPlayerSpawnPoint(playerID);
-			if (spawnpt!=null && _respawnInSeconds <= 0)
+
+			var spawnPoint = GetLevelManager().GetPlayerSpawnPoint(this.team);   //SpawnPoint spawnpt =  GetLevelManager().GetPlayerSpawnPoint(playerID);
+
+			if (_respawnInSeconds <= 0)//if (spawnpt!=null && _respawnInSeconds <= 0)
 			{
 				Debug.Log($"Respawning player {playerID}, life={life}, lives={lives}, hasAuthority={Object.HasStateAuthority} from state={state}");
 
@@ -431,9 +436,11 @@ namespace FusionExamples.Tanknarok
 				invulnerabilityTimer = TickTimer.CreateFromSeconds(Runner, 1);
 
 				// Place the tank at its spawn point. This has to be done in FUN() because the transform gets reset otherwise
-				Transform spawn = spawnpt.transform;
-				transform.position = spawn.position;
-				transform.rotation = spawn.rotation;
+				//Transform spawn = spawnpt.transform;
+				//transform.position = spawn.position;
+				//transform.rotation = spawn.rotation;
+
+				transform.position = spawnPoint;
 
 				// If the player was already here when we joined, it might already be active, in which case we don't want to trigger any spawn FX, so just leave it ACTIVE
 				if(state!=State.Active)
@@ -654,7 +661,7 @@ namespace FusionExamples.Tanknarok
 
 			var playerPosition = transform.localPosition;
 			
-			if (targetDetector.TargetFound)
+			if (targetDetector.TargetFound && targetDetector.Target != null)
             {
 				var targetPosition = targetDetector.Target.transform.position;
 				targetPosition.y = playerPosition.y;
@@ -768,8 +775,6 @@ namespace FusionExamples.Tanknarok
 
 			if (!canDeliver) return;
 
-			Debug.LogError($"Deliver <color=yellow>{this.amountCollectables}</color>");
-
 			this.amountCollectables = 0;
 
 			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
@@ -801,8 +806,6 @@ namespace FusionExamples.Tanknarok
 		private void OnDisplayNameChanged(string displayName)
         {
 			_hud.SetDisplayName(this.displayName);
-
-			Debug.LogError($"REMOTE display name from id: <color=yellow>{this.Id}</color> is '<color=cyan>{this.displayName}</color>' assigned ({displayName})");
         }
 
 		public static void OnTeamChanged(Changed<Player> changed)

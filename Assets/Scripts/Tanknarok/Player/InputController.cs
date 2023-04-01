@@ -17,6 +17,7 @@ namespace FusionExamples.Tanknarok
 		public static bool fetchInput = true;
 		public bool ToggleReady { get; set; }
 		public bool DashInput { get; set; }
+		public bool AttackInput { get; set; }
 
 		private Player _player;
 		private NetworkInputData _frameworkInput = new NetworkInputData();
@@ -48,6 +49,7 @@ namespace FusionExamples.Tanknarok
 			}
 
 			PlayerActionEvents.OnStartDash += StartDash;
+			PlayerActionEvents.OnStartAttack += StartAttack;
 
 			Debug.Log("Spawned [" + this + "] IsClient=" + Runner.IsClient + " IsServer=" + Runner.IsServer + " HasInputAuth=" + Object.HasInputAuthority + " HasStateAuth=" + Object.HasStateAuthority);
 		}
@@ -67,22 +69,28 @@ namespace FusionExamples.Tanknarok
 				
 				_frameworkInput.moveDirection = _moveDelta.normalized;
 
-				if ( _primaryFire )
-				{
-					_primaryFire = false;
-					_frameworkInput.Buttons |= NetworkInputData.BUTTON_FIRE_PRIMARY;
-				}
+				//if ( _primaryFire )
+				//{
+				//	_primaryFire = false;
+				//	_frameworkInput.Buttons |= NetworkInputData.BUTTON_FIRE_PRIMARY;
+				//}
 
-				if ( _secondaryFire )
-				{
-					_secondaryFire = false;
-					_frameworkInput.Buttons |= NetworkInputData.BUTTON_FIRE_SECONDARY;
-				}
+				//if ( _secondaryFire )
+				//{
+				//	_secondaryFire = false;
+				//	_frameworkInput.Buttons |= NetworkInputData.BUTTON_FIRE_SECONDARY;
+				//}
 
 				if (ToggleReady)
 				{
 					ToggleReady = false;
 					_frameworkInput.Buttons |= NetworkInputData.READY;
+				}
+
+				if (AttackInput)
+                {
+					AttackInput = false;
+					_frameworkInput.Buttons |= NetworkInputData.BUTTON_FIRE_SECONDARY;
 				}
 
 				if (DashInput)
@@ -104,12 +112,18 @@ namespace FusionExamples.Tanknarok
 		public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
 		{
 			PlayerActionEvents.OnStartDash -= StartDash;
+			PlayerActionEvents.OnStartAttack -= StartAttack;
 		}
 
 		private void StartDash()
         {
 			DashInput = true;
         }
+
+		private void StartAttack()
+		{
+			AttackInput = true;
+		}
 
 		private void Update()
 		{
@@ -119,11 +133,11 @@ namespace FusionExamples.Tanknarok
 
 			if (Input.mousePresent)
 			{
-				if (Input.GetMouseButton(0) )
-					_primaryFire = true;
+				//if (Input.GetMouseButton(0) )
+				//	_primaryFire = true;
 
-				if (Input.GetMouseButton(1) )
-					_secondaryFire = true;
+				//if (Input.GetMouseButton(1) )
+				//	_secondaryFire = true;
 
 				_moveDelta = Vector2.zero;
 				
@@ -232,10 +246,10 @@ namespace FusionExamples.Tanknarok
 				//}
 
 				// Process lobby ready action
-				if (input.IsDown(NetworkInputData.READY))
-				{
-					_player.ToggleReady();
-				}
+				//if (input.IsDown(NetworkInputData.READY))
+				//{
+				//	_player.ToggleReady();
+				//}
 
 				// Process Dash input
 				if (input.IsDown(NetworkInputData.DASH))

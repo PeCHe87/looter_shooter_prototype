@@ -14,9 +14,14 @@ namespace FusionExamples.Tanknarok
 		}
 
 		[SerializeField] private LevelLighting _levelLighting;
+		[SerializeField] private Transform _spawnPointBlue = default;
+		[SerializeField] private Transform _spawnPointRed = default;
 
 		private SpawnPoint[] _playerSpawnPoints;
-		
+
+		public Transform SpawnPointBlue => _spawnPointBlue;
+		public Transform SpawnPointRed => _spawnPointRed;
+
 		private void Awake()
 		{
 			_playerSpawnPoints = GetComponentsInChildren<SpawnPoint>(true);
