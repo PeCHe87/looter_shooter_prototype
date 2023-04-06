@@ -41,6 +41,9 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private WeaponManager weaponManager;
 		[SerializeField] private TargeteableBase _targeteableBase = default;
 
+		[Header("UI")]
+		[SerializeField] private UI_PlayerWeaponInfo _weaponInformation = default;
+
         #endregion
 
         #region Networked properties
@@ -192,6 +195,12 @@ namespace FusionExamples.Tanknarok
 				_isLocal = isLocal;
 				var displayName = PlayerPrefs.GetString("playerDisplayName");
 				var team = (TeamEnum)PlayerPrefs.GetInt("playerTeam");
+
+				_weaponInformation = FindObjectOfType<UI_PlayerWeaponInfo>();
+
+				_weaponInformation.Init();
+
+				shooter.ResetAllWeapons();
 
 				RPC_SetInformation(displayName, team);
             }
@@ -822,6 +831,31 @@ namespace FusionExamples.Tanknarok
 			_hud.SetTeam(this.team);
 		}
 
-		#endregion
-	}
+        #endregion
+
+        #region Weapon actions
+
+		public void RefreshWeaponInformation(int ammo, int magazine)
+        {
+			if (!_isLocal) return;
+
+			_weaponInformation.Refresh(ammo, magazine);
+        }
+
+		public void StartReloadingWeapon()
+        {
+			if (!_isLocal) return;
+
+			_weaponInformation.StartReloading();
+        }
+
+		public void StopReloadingWeapon(int ammo, int magazine)
+		{
+			if (!_isLocal) return;
+
+			_weaponInformation.StopReloading(ammo, magazine);
+		}
+
+        #endregion
+    }
 }

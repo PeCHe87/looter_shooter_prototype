@@ -91,8 +91,6 @@ namespace FusionExamples.Tanknarok.Gameplay
             if (Object.HasStateAuthority)
             {
                 _netHealth = (byte)UnityEngine.Random.Range(_minHp, _maxHp + 1);
-
-                Debug.LogError($"BaseEnemy::Spawned -> initial HP: <color=yellow>{_netHealth}</color>");
             }
 
             _initialized = true;

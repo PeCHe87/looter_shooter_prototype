@@ -33,6 +33,9 @@ namespace FusionExamples.Tanknarok
 		[Networked]
 		public byte secondaryAmmo { get; set; }
 
+		[Networked] public NetworkBool isReloading { get; set; }
+		[Networked] public TickTimer reloadingTime { get; set; }
+
 		private byte _activePrimaryWeapon;
 		private byte _activeSecondaryWeapon;
 
@@ -41,7 +44,19 @@ namespace FusionExamples.Tanknarok
 			ShowAndHideWeapons();
 		}
 
-		private void ShowAndHideWeapons()
+        public override void FixedUpdateNetwork()
+        {
+            // Check if reloading should finish
+			if (this.isReloading)
+            {
+				if (this.reloadingTime.ExpiredOrNotRunning(Runner))
+                {
+					StopReloading();
+                }
+			}
+        }
+
+        private void ShowAndHideWeapons()
 		{
 			// Animates the scale of the weapon based on its active status
 			for (int i = 0; i < _weapons.Length; i++)
@@ -80,6 +95,8 @@ namespace FusionExamples.Tanknarok
 			{
 				selectedPrimaryWeapon = (byte)weaponIndex;
 				primaryAmmo = _weapons[(byte) weaponIndex].ammo;
+
+				_player.RefreshWeaponInformation(primaryAmmo, _weapons[(byte)weaponIndex].InitialAmmo);
 			}
 			else
 			{
@@ -95,6 +112,13 @@ namespace FusionExamples.Tanknarok
 		/// </summary>
 		public void FireWeapon(WeaponInstallationType weaponType)
 		{
+			// Avoid action if it is reloading
+			if (this.isReloading)
+			{
+				Debug.LogError("<color=yellow>Weapon</color>: not allowed to fire");
+				return;
+			}
+
 			if (!IsWeaponFireAllowed(weaponType))
 				return;
 
@@ -124,10 +148,19 @@ namespace FusionExamples.Tanknarok
 					secondaryAmmo = ammo;
 				}
 					
-				if (/*Object.HasStateAuthority &&*/ ammo == 0)
-				{
-					ResetWeapon(weaponType);
-				}
+				//if (/*Object.HasStateAuthority &&*/ ammo == 0)
+				//{
+				//	ResetWeapon(weaponType);
+				//}
+
+				if (ammo == 0 && !this.isReloading)
+                {
+					StartReloading(weapon);
+                }
+				else
+                {
+					_player.RefreshWeaponInformation(ammo, weapon.InitialAmmo);
+                }
 			}
 		}
 
@@ -191,5 +224,28 @@ namespace FusionExamples.Tanknarok
 			Debug.LogError($"Weapon {powerupType} was not found in the weapon list, returning <color=red>0 </color>");
 			return 0;
 		}
-	}
+
+        #region Reloading actions
+
+		private void StartReloading(Weapon weapon)
+        {
+			this.reloadingTime = TickTimer.CreateFromSeconds(Runner, weapon.ReloadingTime);
+			this.isReloading = true;
+
+			_player.StartReloadingWeapon();
+        }
+
+		private void StopReloading()
+        {
+			Weapon weapon = _weapons[_activePrimaryWeapon];
+
+			this.primaryAmmo = weapon.InitialAmmo;
+
+			this.isReloading = false;
+
+			_player.StopReloadingWeapon(this.primaryAmmo, weapon.InitialAmmo);
+        }
+
+        #endregion
+    }
 }

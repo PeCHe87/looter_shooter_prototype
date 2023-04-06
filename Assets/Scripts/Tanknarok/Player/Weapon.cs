@@ -15,12 +15,14 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private Transform[] _gunExits;
 		[SerializeField] private Projectile _projectilePrefab; // Networked projectile
 		[SerializeField] private float _rateOfFire;
+		[SerializeField] private byte _initialAmmo;
 		[SerializeField] private byte _ammo;
 		[SerializeField] private bool _infiniteAmmo;
 		[SerializeField] private AudioEmitter _audioEmitter;
 		[SerializeField] private LaserSightLine _laserSight;
 		[SerializeField] private PowerupType _powerupType = PowerupType.DEFAULT;
 		[SerializeField] private ParticleSystem _muzzleFlashPrefab;
+		[SerializeField] private float _reloadingTime = 2;
 
 		[Networked(OnChanged = nameof(OnFireTickChanged))]
 		private int fireTick { get; set; }
@@ -34,6 +36,8 @@ namespace FusionExamples.Tanknarok
 		public bool isShowing => _visible >= 1.0f;
 		public byte ammo => _ammo;
 		public bool infiniteAmmo => _infiniteAmmo;
+		public float ReloadingTime => _reloadingTime;
+		public byte InitialAmmo => _initialAmmo;
 
 		public PowerupType powerupType => _powerupType;
 
