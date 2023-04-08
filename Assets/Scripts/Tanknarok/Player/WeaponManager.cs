@@ -44,6 +44,15 @@ namespace FusionExamples.Tanknarok
 			ShowAndHideWeapons();
 		}
 
+        public override void Spawned()
+        {
+			var weaponIndex = 0;
+			var weapon = _weapons[weaponIndex];
+
+			primaryAmmo = weapon.ammo;
+			_player.RefreshWeaponInformation(primaryAmmo, weapon.InitialAmmo);
+		}
+
         public override void FixedUpdateNetwork()
         {
             // Check if reloading should finish
@@ -113,14 +122,9 @@ namespace FusionExamples.Tanknarok
 		public void FireWeapon(WeaponInstallationType weaponType)
 		{
 			// Avoid action if it is reloading
-			if (this.isReloading)
-			{
-				Debug.LogError("<color=yellow>Weapon</color>: not allowed to fire");
-				return;
-			}
+			if (this.isReloading) return;
 
-			if (!IsWeaponFireAllowed(weaponType))
-				return;
+			if (!IsWeaponFireAllowed(weaponType)) return;
 
 			byte ammo = weaponType == WeaponInstallationType.PRIMARY ? primaryAmmo : secondaryAmmo;
 

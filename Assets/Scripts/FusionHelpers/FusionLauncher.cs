@@ -54,12 +54,14 @@ namespace FusionExamples.FusionHelpers
 			if(_pool==null)
 				_pool = gameObject.AddComponent<FusionObjectPoolRoot>();
 
+			// Disable NAT Punchthrough: it makes easier to test latency
 			await _runner.StartGame(new StartGameArgs()
 			{
-				GameMode = mode, 
+				GameMode = mode,
 				SessionName = room,
 				ObjectPool = _pool,
-				SceneManager = sceneLoader
+				SceneManager = sceneLoader,
+				DisableNATPunchthrough = true
 			});
 		}
 

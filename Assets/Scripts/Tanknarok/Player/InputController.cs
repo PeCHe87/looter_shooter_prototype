@@ -226,6 +226,7 @@ namespace FusionExamples.Tanknarok
 		{
 			if (GameManager.playState == GameManager.PlayState.TRANSITION)
 				return;
+
 			// Get our input struct and act accordingly. This method will only return data if we
 			// have Input or State Authority - meaning on the controlling player or the server.
 			Vector2 direction = default;

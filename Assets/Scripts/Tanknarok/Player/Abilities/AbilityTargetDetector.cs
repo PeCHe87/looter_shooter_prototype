@@ -1,6 +1,7 @@
 
 using FusionExamples.Tanknarok.UI;
 using UnityEngine;
+using static FusionExamples.Tanknarok.GameLauncher;
 
 namespace FusionExamples.Tanknarok.CharacterAbilities
 {
@@ -27,6 +28,7 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
         private string _targetId = NO_TARGET_ID;
         private Vector3 _moveDirection = default;
         private bool _isLocal = false;
+        private TeamEnum _playerTeam = TeamEnum.NONE;
         private const string NO_TARGET_ID = "none";
 
         #endregion
@@ -72,6 +74,11 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
         public void Init(bool isLocal)
         {
             _isLocal = isLocal;
+        }
+
+        public void SetTeam(TeamEnum team)
+        {
+            _playerTeam = team;
         }
 
         public void UpdateMovementDirection(Vector3 direction)
@@ -169,6 +176,12 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
 
                 if (!hit.transform.parent.TryGetComponent<TargeteableBase>(out var targeteable)) continue;
 
+                // Check player's team, skip same team
+                if (hit.transform.parent.TryGetComponent<Player>(out var player))
+                {
+                    if (player.team == _playerTeam) continue;
+                }
+
                 var targetPosition = hit.transform.position;
                 targetPosition.y = 0;
 
@@ -212,6 +225,12 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
                 if (hit.transform.parent == transform) continue;
 
                 if (!hit.transform.parent.TryGetComponent<TargeteableBase>(out var targeteable)) continue;
+
+                // Check player's team, skip same team
+                if (hit.transform.parent.TryGetComponent<Player>(out var player))
+                {
+                    if (player.team == _playerTeam) continue;
+                }
 
                 var targetPosition = hit.transform.position;
 

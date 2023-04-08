@@ -14,15 +14,15 @@ namespace FusionExamples.Tanknarok
 	[RequireComponent(typeof(NetworkCharacterControllerPrototype))]
 	public class Player : NetworkBehaviour, ICanTakeDamage
 	{
-        #region Consts
+		#region Consts
 
-        public const byte MAX_HEALTH = 100;
+		public const byte MAX_HEALTH = 100;
 
-        #endregion
+		#endregion
 
-        #region Inspector
+		#region Inspector
 
-        [Header("Visuals")]
+		[Header("Visuals")]
 		[SerializeField] private Transform _body;
 		[SerializeField] private Transform _hull;
 		[SerializeField] private Transform _turret;
@@ -32,7 +32,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private TankTeleportOutEffect _teleportOut;
 		[SerializeField] private PlayerFloatingHud _hud = default;
 
-		[Space(10)] 
+		[Space(10)]
 		[SerializeField] private GameObject _deathExplosionPrefab;
 		[SerializeField] private LayerMask _groundMask;
 		[SerializeField] private float _pickupRadius;
@@ -44,11 +44,11 @@ namespace FusionExamples.Tanknarok
 		[Header("UI")]
 		[SerializeField] private UI_PlayerWeaponInfo _weaponInformation = default;
 
-        #endregion
+		#endregion
 
-        #region Networked properties
+		#region Networked properties
 
-        [Networked(OnChanged = nameof(OnStateChanged))]
+		[Networked(OnChanged = nameof(OnStateChanged))]
 		public State state { get; set; }
 
 		[Networked]
@@ -77,9 +77,9 @@ namespace FusionExamples.Tanknarok
 
 		[Networked]
 		public NetworkBool ready { get; set; }
-		[Networked(OnChanged = nameof(OnDisplayNameChanged))] 
+		[Networked(OnChanged = nameof(OnDisplayNameChanged))]
 		public string displayName { get; set; }
-		[Networked(OnChanged = nameof(OnTeamChanged))] 
+		[Networked(OnChanged = nameof(OnTeamChanged))]
 		public TeamEnum team { get; set; }
 
 		#endregion
@@ -95,17 +95,17 @@ namespace FusionExamples.Tanknarok
 			Dead
 		}
 
-        enum DriveDirection
+		enum DriveDirection
 		{
 			FORWARD,
 			BACKWARD
 		};
 
-        #endregion
+		#endregion
 
-        #region Public properties
+		#region Public properties
 
-        public static Player local { get; set; }
+		public static Player local { get; set; }
 
 		public bool isActivated => (gameObject.activeInHierarchy && (state == State.Active || state == State.Spawning));
 		public bool isDead => state == State.Dead;
@@ -125,13 +125,14 @@ namespace FusionExamples.Tanknarok
 		public Vector3 MoveDirection => this.moveDirection;
 		public bool IsLocal => _isLocal;
 
-        #endregion
+		#endregion
 
-        #region Private properties
+		#region Private properties
 
-        private DriveDirection _driveDirection = DriveDirection.FORWARD;
+		private DriveDirection _driveDirection = DriveDirection.FORWARD;
 
 		private bool _isLocal = false;
+		private bool _localDashStarted = false;
 		private Transform _transform = default;
 		private NetworkCharacterControllerPrototype _cc;
 		private Collider[] _overlaps = new Collider[1];
@@ -145,11 +146,11 @@ namespace FusionExamples.Tanknarok
 		private float _originalGravity = 0;
 		private float _originalMaxSpeed = 0;
 
-        #endregion
+		#endregion
 
-        #region Original methods
+		#region Original methods
 
-        public void ToggleReady()
+		public void ToggleReady()
 		{
 			ready = !ready;
 		}
@@ -172,7 +173,7 @@ namespace FusionExamples.Tanknarok
 				_levelManager = FindObjectOfType<LevelManager>();
 			return _levelManager;
 		}
-		
+
 		public void InitNetworkState(byte maxLives)
 		{
 			state = State.New;
@@ -191,7 +192,7 @@ namespace FusionExamples.Tanknarok
 			var isLocal = Object.HasInputAuthority;
 
 			if (isLocal)
-            {
+			{
 				_isLocal = isLocal;
 				var displayName = PlayerPrefs.GetString("playerDisplayName");
 				var team = (TeamEnum)PlayerPrefs.GetInt("playerTeam");
@@ -202,11 +203,20 @@ namespace FusionExamples.Tanknarok
 
 				shooter.ResetAllWeapons();
 
+				_dashInfo = FindObjectOfType<UI_PlayerDashInfo>();
+
+				SetMapIndicator(this.team);
+				SetLocal();
+
 				RPC_SetInformation(displayName, team);
-            }
+			}
+			else
+			{
+				SetMapIndicator(this.team);
+			}
 
 			targetDetector.Init(isLocal);
-			
+
 			_targeteableBase.SetId(Id.ToString(), Object.HasInputAuthority);
 
 			_originalGravity = _cc.gravity;
@@ -226,7 +236,7 @@ namespace FusionExamples.Tanknarok
 			_damageVisuals.Initialize(playerMaterial);
 
 			PlayerManager.AddPlayer(this);
-			
+
 			// Auto will set proxies to InterpolationDataSources.Snapshots and State/Input authority to InterpolationDataSources.Predicted
 			// The NCC must use snapshots on proxies for lag compensated raycasts to work properly against them.
 			// The benefit of "Auto" is that it will update automatically if InputAuthority is changed (this is not relevant in this game, but worth keeping in mind)
@@ -251,6 +261,12 @@ namespace FusionExamples.Tanknarok
 					ResetPlayer();
 
 				CheckDashFinalization();
+
+				// Process dash when corresponding
+				if (DashInProgress())
+				{
+					ApplyDash();
+				}
 			}
 
 			CheckForPowerupPickup();
@@ -340,11 +356,13 @@ namespace FusionExamples.Tanknarok
 		{
 			if (!isActivated) return;
 
-			if (DashInProgress())
-            {
+			if (DashInProgress()) return;
+
+			/*if (DashInProgress())
+			{
 				ApplyDash();
 				return;
-            }
+			}*/
 
 			//_cc.Move(new Vector3(moveDirection.x,0,moveDirection.y));
 
@@ -395,12 +413,12 @@ namespace FusionExamples.Tanknarok
 			{
 				life = 0;
 				state = State.Dead;
-				
-				if(GameManager.playState==GameManager.PlayState.LEVEL)
+
+				if (GameManager.playState == GameManager.PlayState.LEVEL)
 					lives -= 1;
 
 				//if (lives > 0)
-					Respawn( _respawnTime );
+				Respawn(_respawnTime);
 
 				RefreshCollectablesOnDeath();
 
@@ -417,7 +435,7 @@ namespace FusionExamples.Tanknarok
 			if (Runner.Stage == SimulationStages.Forward)
 				_damageVisuals.OnDamaged(life, isDead);
 		}
-		
+
 		public void Respawn(float inSeconds)
 		{
 			_respawnInSeconds = inSeconds;
@@ -425,7 +443,7 @@ namespace FusionExamples.Tanknarok
 
 		private void CheckRespawn()
 		{
-			if(_respawnInSeconds>0)
+			if (_respawnInSeconds > 0)
 				_respawnInSeconds -= Runner.DeltaTime;
 
 			var spawnPoint = GetLevelManager().GetPlayerSpawnPoint(this.team);   //SpawnPoint spawnpt =  GetLevelManager().GetPlayerSpawnPoint(playerID);
@@ -452,16 +470,16 @@ namespace FusionExamples.Tanknarok
 				transform.position = spawnPoint;
 
 				// If the player was already here when we joined, it might already be active, in which case we don't want to trigger any spawn FX, so just leave it ACTIVE
-				if(state!=State.Active)
+				if (state != State.Active)
 					state = State.Spawning;
-	
+
 				Debug.Log($"Respawned player {playerID}, tick={Runner.Simulation.Tick}, timer={respawnTimer.IsRunning}:{respawnTimer.TargetTick}, life={life}, lives={lives}, hasAuthority={Object.HasStateAuthority} to state={state}");
 			}
 		}
-		
+
 		public static void OnStateChanged(Changed<Player> changed)
 		{
-			if(changed.Behaviour)
+			if (changed.Behaviour)
 				changed.Behaviour.OnStateChanged();
 		}
 
@@ -578,10 +596,17 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private float _dashDuration = 1;
 		[SerializeField] private float _dashMaxSpeed = 1;
 		[SerializeField] private float _dashRecoveringDelay = 1;
+		[SerializeField] private float _dashFireRate = 2;
+		[SerializeField] private UI_PlayerDashInfo _dashInfo = default;
 
-		[Networked] public NetworkBool isDashing { get; set; }
-		[Networked] public NetworkBool isDashingRecovering { get; set; }
+		[Networked(OnChanged = nameof(OnDashStateChanged))] public NetworkBool isDashing { get; set; }
+		[Networked(OnChanged = nameof(OnDashRecoveringStateChanged))] public NetworkBool isDashingRecovering { get; set; }
 		[Networked] public TickTimer dashCooldown { get; set; }
+		[Networked] public TickTimer dashFireRateCooldown { get; set; }
+
+		[Networked] public float _dashDirectionX {get; set;}
+
+		[Networked] public float _dashDirectionY { get; set; }
 
 		private Vector2 _dashDirection = default;
 
@@ -591,29 +616,40 @@ namespace FusionExamples.Tanknarok
         }
 
 		public void StartDash()
-        {
+		{
+			// Check dash fire rate
+			if (!this.dashFireRateCooldown.ExpiredOrNotRunning(Runner)) return;
+
 			if (this.isDashing) return;
 
-			this.isDashing = true;
+			_dashDirectionX = _lastMoveDirection.x;
+			_dashDirectionY = _lastMoveDirection.y;
 
 			this.dashCooldown = TickTimer.CreateFromSeconds(Runner, _dashDuration);
 
-			Debug.Log("DASH: <color=green>start</color>");
-
-			_dashDirection = _lastMoveDirection;
-
-			var impulse = new Vector3(_dashDirection.x, 0, _dashDirection.y).normalized * _dashForce;
+			this.dashFireRateCooldown = TickTimer.CreateFromSeconds(Runner, _dashFireRate);
 
 			_cc.maxSpeed = _dashMaxSpeed;
+			_cc.acceleration = 200;
 			_cc.gravity = 0;
-			_cc.Velocity += impulse;	// / 10.0f; // Magic constant to compensate for not properly dealing with masses
-			_cc.Move(Vector3.zero); // Velocity property is only used by CC when steering, so pretend we are, without actually steering anywhere
+			_cc.Velocity = Vector3.zero;
+			_cc.Move(Vector3.zero);
 
 			_damageVisuals.SetDashing(true);
+
+			_localDashStarted = true;
+
+			this.isDashing = true;
+
+			if (!_isLocal) return;
+
+			_dashInfo.StartReloading(_dashFireRate, this.dashFireRateCooldown, Runner);
 		}
 
 		private void ApplyDash()
         {
+			//if (!Object.HasStateAuthority) return;
+
 			if (!this.isDashing)
 			{
 				_cc.Move(Vector3.zero);
@@ -621,7 +657,11 @@ namespace FusionExamples.Tanknarok
 				return;
 			}
 
-			_cc.Move(new Vector3(_dashDirection.x, 0, _dashDirection.y));
+			var direction = new Vector3(_dashDirectionX, 0, _dashDirectionY);
+
+			//this.moveDirection = direction;
+
+			_cc.Move(direction);
 		}
 
 		private void CheckDashFinalization()
@@ -632,28 +672,101 @@ namespace FusionExamples.Tanknarok
 
 			if (this.isDashing)
 			{
-				this.isDashing = false;
-				this.isDashingRecovering = true;
 				this.dashCooldown = TickTimer.CreateFromSeconds(Runner, _dashRecoveringDelay);
-
-				// Stop movement
-				//_cc.Velocity = Vector3.zero;
-				//_cc.Move(Vector3.zero);
 
 				// Recover gravity
 				_cc.gravity = _originalGravity;
 
 				// Recover max speed
 				_cc.maxSpeed = _originalMaxSpeed;
+				_cc.acceleration = 100;
+
+
+				this.isDashing = false;
+				this.isDashingRecovering = true;
 
 				return;
 			}
 
+			_localDashStarted = false;
+
 			this.isDashingRecovering = false;
+			
+			_cc.Velocity = Vector3.zero;
 
 			_damageVisuals.SetDashing(false);
 
 			Debug.Log("DASH: <color=orange>finish</color>");
+		}
+
+		public static void OnDashStateChanged(Changed<Player> changed)
+		{
+			if (!changed.Behaviour) return;
+
+			var isDashing = changed.Behaviour.isDashing;
+
+			if (!isDashing) return;
+
+			changed.Behaviour.StartDashing_Remote();
+		}
+
+		public static void OnDashRecoveringStateChanged(Changed<Player> changed)
+		{
+			if (!changed.Behaviour) return;
+
+			var isDashRecovering = changed.Behaviour.isDashingRecovering;
+
+			if (isDashRecovering)
+            {
+				changed.Behaviour.StartDashRecovering_Remote();
+
+				return;
+            }
+
+			changed.Behaviour.StopDashRecovering_Remote();
+		}
+
+		private void StartDashing_Remote()
+        {
+			//if (_localDashStarted) return;
+
+			/*if (Object.HasInputAuthority) return;
+
+			_cc.maxSpeed = _dashMaxSpeed;
+			_cc.gravity = 0;
+			_cc.Move(Vector3.zero);
+
+			*/
+
+			_damageVisuals.SetDashing(true);
+		}
+
+		private void StartDashRecovering_Remote()
+        {
+			//if (_localDashStarted) return;
+
+			// Recover gravity
+			_cc.gravity = _originalGravity;
+
+			// Recover max speed
+			_cc.maxSpeed = _originalMaxSpeed;
+			_cc.acceleration = 100;
+		}
+
+		private void StopDashRecovering_Remote()
+        {
+			//if (_localDashStarted) return;
+
+			_cc.Velocity = Vector3.zero;
+			
+			// Recover gravity
+			_cc.gravity = _originalGravity;
+
+			// Recover max speed
+			_cc.maxSpeed = _originalMaxSpeed;
+			_cc.acceleration = 100;
+
+			_damageVisuals.SetDashing(false);
 		}
 
 		#endregion
@@ -801,6 +914,12 @@ namespace FusionExamples.Tanknarok
 
 			_hud.SetDisplayName(this.displayName);
 			_hud.SetTeam(this.team);
+
+			targetDetector.SetTeam(this.team);
+
+			if (_isLocal) return;
+
+			SetMapIndicator(team);
 		}
 
 		public static void OnDisplayNameChanged(Changed<Player> changed)
@@ -829,6 +948,8 @@ namespace FusionExamples.Tanknarok
 		private void OnTeamChanged(TeamEnum team)
 		{
 			_hud.SetTeam(this.team);
+
+			targetDetector.SetTeam(this.team);
 		}
 
         #endregion
@@ -855,6 +976,26 @@ namespace FusionExamples.Tanknarok
 
 			_weaponInformation.StopReloading(ammo, magazine);
 		}
+
+		#endregion
+
+		#region Minimap indicator
+
+		[SerializeField] private SpriteRenderer _minimapIndicator = default;
+		[SerializeField] private Sprite _minimapLocalIndicator = default;
+		[SerializeField] private Color _colorTeamBlue = default;
+		[SerializeField] private Color _colorTeamRed = default;
+
+		private void SetLocal()
+        {
+			_minimapIndicator.sprite = _minimapLocalIndicator;
+			_minimapIndicator.color = Color.white;
+		}
+
+		private void SetMapIndicator(TeamEnum team)
+        {
+			_minimapIndicator.color = (team == TeamEnum.BLUE) ? _colorTeamBlue : _colorTeamRed;
+        }
 
         #endregion
     }
