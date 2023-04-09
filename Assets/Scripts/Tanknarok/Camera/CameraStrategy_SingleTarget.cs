@@ -16,6 +16,8 @@ namespace FusionExamples.Tanknarok
 
 		[Header("Camera Settings")] private float cameraTiltAngle = 55f;
 
+		[SerializeField] private bool _applyAimingOffset = true;
+		[SerializeField] private float _zOffset = 5f;
 		[SerializeField] private float _maxDist = 64f;
 		[SerializeField] private float _minDist = 50f;
 
@@ -210,10 +212,18 @@ namespace FusionExamples.Tanknarok
 		{
 			//Camera local position and rotation
 			_myCamera.transform.localPosition = Vector3.Lerp(_myCamera.transform.localPosition, _offset, Time.fixedDeltaTime * 10f) + _screenShaker.finalPositionalShake;
+
 			_myCamera.transform.rotation = Quaternion.Lerp(_myCamera.transform.rotation, Quaternion.Euler(cameraTiltAngle, 0, 0), Time.fixedDeltaTime * 10f) * _screenShaker.finalRotationShake;
 
+			var goalPosition = _averageTarget;
+
+			if (_applyAimingOffset && _targets.Count > 0)
+			{
+				goalPosition += _targets[0].transform.forward * _zOffset;
+			}
+
 			//Camera parent position
-			transform.position = Vector3.Lerp(transform.position, _averageTarget, Time.fixedDeltaTime * _moveSpeed);
+			transform.position = Vector3.Lerp(transform.position, goalPosition, Time.fixedDeltaTime * _moveSpeed);
 		}
 
 		void ForceUpdatePositionAndRotation()

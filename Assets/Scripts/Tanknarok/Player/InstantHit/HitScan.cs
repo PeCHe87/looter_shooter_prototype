@@ -81,8 +81,10 @@ namespace FusionExamples.Tanknarok
 			_visual = GetComponentInChildren<IVisual>(true);
 		}
 
-		public override void InitNetworkState(Vector3 ownerVelocity)
+		public override void InitNetworkState(Vector3 ownerVelocity, EntityType type)
 		{
+			_entityType = type;
+
 			Debug.Log($"Initialising InstantHit predictedspawn={Object.IsPredictedSpawn}");
 			life = TickTimer.CreateFromSeconds(Runner, _settings.timeToFade);
 
@@ -140,6 +142,8 @@ namespace FusionExamples.Tanknarok
 					ICanTakeDamage target = _areaHits[i].GameObject.GetComponent<ICanTakeDamage>();
 					if (target != null)
 					{
+						// TODO: check entity type and target type to avoid attack own entity types
+
 						Vector3 impulse = _areaHits[i].GameObject.transform.position - transform.position;
 						float l = Mathf.Clamp(raySetting.areaRadius - impulse.magnitude, 0, raySetting.areaRadius);
 						impulse = raySetting.areaImpulse * l * impulse.normalized;

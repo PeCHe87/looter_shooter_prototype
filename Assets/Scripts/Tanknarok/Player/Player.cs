@@ -124,6 +124,7 @@ namespace FusionExamples.Tanknarok
 		public Quaternion hullRotation => _hull.rotation;
 		public Vector3 MoveDirection => this.moveDirection;
 		public bool IsLocal => _isLocal;
+		public Transform Body => _body;
 
 		#endregion
 
@@ -215,6 +216,8 @@ namespace FusionExamples.Tanknarok
 				SetMapIndicator(this.team);
 			}
 
+			InitLootboxInteraction();
+
 			targetDetector.Init(isLocal);
 
 			_targeteableBase.SetId(Id.ToString(), Object.HasInputAuthority);
@@ -274,6 +277,8 @@ namespace FusionExamples.Tanknarok
 			CheckForCollectablePickup();
 
 			CheckForDelivery();
+
+			CheckForLootboxInteraction();
 		}
 
 		/// <summary>
@@ -517,6 +522,8 @@ namespace FusionExamples.Tanknarok
 
 		public override void Despawned(NetworkRunner runner, bool hasState)
 		{
+			TeardownLootboxInteraction();
+
 			Destroy(_deathExplosionInstance);
 			PlayerManager.RemovePlayer(this);
 		}
@@ -998,5 +1005,89 @@ namespace FusionExamples.Tanknarok
         }
 
         #endregion
-    }
+
+        #region UI methods
+
+		public void InitFloatingHud(UI_PlayerFloatingHud hud)
+        {
+			if (!hud.TryGetComponent<PlayerFloatingHud>(out var floatingHud)) return;
+
+			_hud = floatingHud;
+
+			_hud.SetDisplayName(this.displayName);
+			_hud.SetTeam(this.team);
+		}
+
+		#endregion
+
+		#region Lootboxes
+
+		[SerializeField] private LayerMask _lootboxMask = default;
+		[SerializeField] private float _lootboxInteractionRadius = default;
+
+		private LootboxBase _lootbox = default;
+		private UI_LootInGamePanel _lootInGamePanel = default;
+
+		private void InitLootboxInteraction()
+        {
+            LootboxBase.OnOpen += OpenLootbox;
+
+            _lootInGamePanel = FindObjectOfType<UI_LootInGamePanel>();
+			_lootInGamePanel?.Init();
+        }
+
+		private void TeardownLootboxInteraction()
+		{
+			LootboxBase.OnOpen -= OpenLootbox;
+
+			_lootInGamePanel?.Teardown();
+		}
+
+        private void OpenLootbox(LootboxData data, string playerId)
+        {
+			if (!_isLocal) return;
+
+			var playerIdParsed = GetPlayerId();
+
+			if (!playerIdParsed.Equals(playerId)) return;
+
+			_lootInGamePanel?.Show(data);
+		}
+
+        private void CheckForLootboxInteraction()
+		{
+			// If we run into a lootbox, try to open it
+			if (isActivated && Runner.GetPhysicsScene().OverlapSphere(transform.position, _lootboxInteractionRadius, _overlaps, _lootboxMask, QueryTriggerInteraction.Collide) > 0)
+			{
+				_lootbox = _overlaps[0].GetComponent<LootboxBase>();
+
+				TryToOpenLootbox();
+
+				return;
+			}
+
+			// Check if there is a lootbox to stop opening
+			if (_lootbox == null) return;
+
+			_lootbox.StopInteracting(GetPlayerId());
+
+			_lootbox = null;
+
+			_lootInGamePanel?.Close();
+		}
+
+		private void TryToOpenLootbox()
+        {
+			if (_lootbox == null) return;
+
+			_lootbox.StartInteracting(GetPlayerId(), this.team);
+        }
+
+		public string GetPlayerId()
+        {
+			return this.playerID.ToString();
+        }
+
+		#endregion
+	}
 }

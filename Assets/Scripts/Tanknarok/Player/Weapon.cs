@@ -103,13 +103,13 @@ namespace FusionExamples.Tanknarok
 		/// <param name="runner"></param>
 		/// <param name="owner"></param>
 		/// <param name="ownerVelocity"></param>
-		public void Fire(NetworkRunner runner, PlayerRef owner, Vector3 ownerVelocity)
+		public void Fire(NetworkRunner runner, PlayerRef owner, Vector3 ownerVelocity, Player player)
 		{
 			if (powerupType == PowerupType.EMPTY || _gunExits.Length == 0)
 				return;
 			
 			var exit = GetExitPoint();
-			SpawnNetworkShot(runner, owner, exit, ownerVelocity);
+			SpawnNetworkShot(runner, owner, exit, ownerVelocity, player);
 
 			//exit = GetExitPoint();
 			//SpawnNetworkShot(runner, owner, exit, ownerVelocity);
@@ -143,7 +143,7 @@ namespace FusionExamples.Tanknarok
 		/// the hosts network object when it arrives. This provides instant client-side feedback and seamless transition
 		/// to the consolidated state.
 		/// </summary>
-		private void SpawnNetworkShot(NetworkRunner runner, PlayerRef owner, Transform exit, Vector3 ownerVelocity)
+		private void SpawnNetworkShot(NetworkRunner runner, PlayerRef owner, Transform exit, Vector3 ownerVelocity, Player player)
 		{
 			//Debug.Log($"Spawning Shot in tick {Runner.Simulation.Tick} stage={Runner.Simulation.Stage}");
 			
@@ -154,7 +154,9 @@ namespace FusionExamples.Tanknarok
 			var key = new NetworkObjectPredictionKey {Byte0 = (byte) rawEncoded, Byte1 = (byte) runner.Simulation.Tick};
 			runner.Spawn(_projectilePrefab, exit.position, exit.rotation, owner, (runner, obj) =>
 			{
-				obj.GetComponent<Projectile>().InitNetworkState(ownerVelocity);
+				var entityType = (player.team == GameLauncher.TeamEnum.BLUE) ? EntityType.PLAYER_TEAM_BLUE : EntityType.PLAYER_TEAM_RED; 
+
+				obj.GetComponent<Projectile>().InitNetworkState(ownerVelocity, entityType);
 			}, key );
 		}
 

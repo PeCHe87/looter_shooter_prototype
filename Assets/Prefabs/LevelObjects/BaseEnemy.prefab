@@ -241,7 +241,7 @@ MonoBehaviour:
   _interpolationDataSource: 0
   _gunExits:
   - {fileID: 7441316144487528029}
-  _projectilePrefab: {fileID: 3844518902735432244, guid: 4722b2b1d2bf34d4f96d01cf093cc1ca, type: 3}
+  _projectilePrefab: {fileID: 3844518902735432244, guid: 8cc5ecf85cbf0454b87123536b0f20d3, type: 3}
   _rateOfFire: 0.3
   _ammo: 10
   _infiniteAmmo: 0

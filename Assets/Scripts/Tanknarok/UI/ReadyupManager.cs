@@ -38,8 +38,8 @@ namespace FusionExamples.Tanknarok
 					_allPlayersReady = false;
 			}
 			
-			if(_allPlayersReady)
-				GameManager.instance.OnAllPlayersReady();
+			//if(_allPlayersReady)
+			//	GameManager.instance.OnAllPlayersReady();
 		}
 
 		public void ShowUI()

@@ -136,7 +136,7 @@ namespace FusionExamples.Tanknarok
 
 				var aimDirection = GetAimingDirection();
 
-				weapon.Fire(Runner,Object.InputAuthority, aimDirection);
+				weapon.Fire(Runner,Object.InputAuthority, aimDirection, _player);
 
 				if (!weapon.infiniteAmmo)
 					ammo--;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Fusion;
+using FusionExamples.Tanknarok.Gameplay;
 using UnityEngine;
 
 namespace FusionExamples.Tanknarok
@@ -106,8 +107,10 @@ namespace FusionExamples.Tanknarok
 		/// PreSpawn is invoked directly when Spawn() is called, before any network state is shared, so this is where we initialize networked properties.
 		/// </summary>
 		/// <param name="ownervelocity"></param>
-		public override void InitNetworkState(Vector3 ownervelocity)
+		public override void InitNetworkState(Vector3 ownervelocity, EntityType type)
 		{
+			_entityType = type;
+
 			lifeTimer = TickTimer.CreateFromSeconds(Runner, _bulletSettings.timeToLive + _bulletSettings.timeToFade);
 			fadeTimer = TickTimer.CreateFromSeconds(Runner, _bulletSettings.timeToFade);
 
@@ -191,10 +194,15 @@ namespace FusionExamples.Tanknarok
 					Vector3 dir = vel.normalized;
 					if (Runner.LagCompensation.Raycast(pos -0.5f*dir, dir, Mathf.Max(_bulletSettings.radius, speed * dt), Object.InputAuthority, out var hitinfo, _bulletSettings.hitMask.value, HitOptions.IncludePhysX))
 					{
-						Detonate(hitinfo.Point);
+						var canExplode = CheckEntityType(hitinfo.GameObject);
 
-						vel = Vector3.zero;
-						pos = hitinfo.Point;
+						if (canExplode)
+						{
+							Detonate(hitinfo.Point);
+
+							vel = Vector3.zero;
+							pos = hitinfo.Point;
+						}
 					}
 				}
 			}
@@ -263,11 +271,27 @@ namespace FusionExamples.Tanknarok
 				for (int i = 0; i < cnt; i++)
 				{
 					GameObject other = _areaHits[i].GameObject;
+
 					if (other)
 					{
 						ICanTakeDamage target = other.GetComponent<ICanTakeDamage>();
+
 						if (target != null)
 						{
+							// Check if entity type is the same as the target entity type
+							if (other.TryGetComponent<BaseEnemy>(out var _))
+							{
+								if (_entityType == EntityType.ENEMY) continue;
+							}
+
+							// Check if entity type is the same as the target entity type
+							if (other.TryGetComponent<Player>(out var player))
+							{
+								var playerTeam = player.team;
+								if (_entityType == EntityType.PLAYER_TEAM_BLUE && playerTeam == GameLauncher.TeamEnum.BLUE) continue;
+								if (_entityType == EntityType.PLAYER_TEAM_RED && playerTeam == GameLauncher.TeamEnum.RED) continue;
+							}
+
 							Vector3 impulse = other.transform.position - hitPoint;
 							float l = Mathf.Clamp(_bulletSettings.areaRadius - impulse.magnitude, 0, _bulletSettings.areaRadius);
 							impulse = _bulletSettings.areaImpulse * l * impulse.normalized;
@@ -277,6 +301,31 @@ namespace FusionExamples.Tanknarok
 				}
 			}
 		}
+
+		private bool CheckEntityType(GameObject hit)
+        {
+			// Check enemy entity
+			if (hit.TryGetComponent<BaseEnemy>(out var _))
+            {
+				if (_entityType == EntityType.ENEMY) return false;
+            }
+			else if (hit.transform.parent != null && hit.transform.parent.TryGetComponent<BaseEnemy>(out var _))
+			{
+				if (_entityType == EntityType.ENEMY) return false;
+			}
+
+			// Check player entity
+			if (hit.TryGetComponent<Player>(out var player))
+            {
+				var playerTeam = player.team;
+
+				if (_entityType == EntityType.PLAYER_TEAM_BLUE && playerTeam == GameLauncher.TeamEnum.BLUE) return false;
+
+				if (_entityType == EntityType.PLAYER_TEAM_RED && playerTeam == GameLauncher.TeamEnum.RED) return false;
+			}
+
+			return true;
+        }
 
 #if UNITY_EDITOR
 		private void OnDrawGizmos()
