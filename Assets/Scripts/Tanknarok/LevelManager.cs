@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Fusion;
 using FusionExamples.FusionHelpers;
+using FusionExamples.Tanknarok.Items;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static FusionExamples.Tanknarok.GameLauncher;
@@ -20,6 +21,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private CameraScreenFXBehaviour _transitionEffect;
 		[SerializeField] private AudioEmitter _audioEmitter;
 		[SerializeField] private Camera _camera = default;
+		[SerializeField] private CatalogData _catalog = default;
 		
 		[SerializeField] private float _spawnRadius = 10;
 
@@ -30,6 +32,7 @@ namespace FusionExamples.Tanknarok
 
 		public FusionLauncher launcher { get; set; }
 		public Camera Camera => _camera;
+		public CatalogData Catalog => _catalog;
 
 		private void Awake()
 		{

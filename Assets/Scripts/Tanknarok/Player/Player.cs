@@ -2,6 +2,7 @@ using System.Collections;
 using System.Threading.Tasks;
 using Fusion;
 using FusionExamples.Tanknarok.CharacterAbilities;
+using FusionExamples.Tanknarok.Items;
 using FusionExamples.Tanknarok.UI;
 using UnityEngine;
 using static FusionExamples.Tanknarok.GameLauncher;
@@ -1025,15 +1026,18 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private LayerMask _lootboxMask = default;
 		[SerializeField] private float _lootboxInteractionRadius = default;
 
-		private LootboxBase _lootbox = default;
+		[Networked] private LootboxBase _lootbox { get; set; }
+		
 		private UI_LootInGamePanel _lootInGamePanel = default;
 
 		private void InitLootboxInteraction()
         {
             LootboxBase.OnOpen += OpenLootbox;
 
+			if (!_isLocal) return;
+
             _lootInGamePanel = FindObjectOfType<UI_LootInGamePanel>();
-			_lootInGamePanel?.Init();
+			_lootInGamePanel?.Init(TakeItemFromLoot);
         }
 
 		private void TeardownLootboxInteraction()
@@ -1043,7 +1047,7 @@ namespace FusionExamples.Tanknarok
 			_lootInGamePanel?.Teardown();
 		}
 
-        private void OpenLootbox(LootboxData data, string playerId)
+        private void OpenLootbox(LootData data, string playerId)
         {
 			if (!_isLocal) return;
 
@@ -1087,6 +1091,34 @@ namespace FusionExamples.Tanknarok
         {
 			return this.playerID.ToString();
         }
+
+		/// <summary>
+		/// Takes an item from the lootbox:
+		///		- Remove item from loot
+		///		- Add item to the player's inventory
+		/// </summary>
+		/// <param name="id"></param>
+		public void TakeItemFromLoot(int id)
+        {
+			if (_lootbox == null) return;
+
+			RPC_TakeItemFromLoot(id);
+
+			// TODO: player inventory should be updated
+
+			_lootInGamePanel?.Remove(id);
+		}
+
+		/// <summary>
+		/// Updates the loot's content for each proxy
+		/// </summary>
+		/// <param name="id"></param>
+		/// <param name="info"></param>
+		[Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+		public void RPC_TakeItemFromLoot(int id, RpcInfo info = default)
+        {
+			_lootbox.Take(id);
+		}
 
 		#endregion
 	}

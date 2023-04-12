@@ -1,4 +1,6 @@
 using Fusion;
+using FusionExamples.Tanknarok.Items;
+using System.Linq;
 using UnityEngine;
 
 namespace FusionExamples.Tanknarok
@@ -13,7 +15,7 @@ namespace FusionExamples.Tanknarok
 
     public class LootboxBase : NetworkBehaviour
     {
-        public static System.Action<LootboxData, string> OnOpen;
+        public static System.Action<LootData, string> OnOpen;
 
         #region Inspector
 
@@ -34,6 +36,7 @@ namespace FusionExamples.Tanknarok
         [Networked] private GameLauncher.TeamEnum _playerTeam { get; set; }
         [Networked(OnChanged = nameof(OnIsOpenChanged))] private NetworkBool _isOpen { get; set; }
         [Networked] private string _playerId { get; set; }
+        [Networked] public ref LootData _lootData => ref MakeRef<LootData>();
 
         #endregion
 
@@ -67,6 +70,21 @@ namespace FusionExamples.Tanknarok
             _isOpening = false;
 
             HideLoading();
+        }
+
+        public void Take(int id)
+        {
+            for (int i = 0; i < _lootData.items.Length; i++)
+            {
+                var item = _lootData.items[i];
+                if (item.id != id) continue;
+
+                item.amount = 0;
+
+                _lootData.items.Set(i, item);
+
+                break;
+            }
         }
 
         #endregion
@@ -128,7 +146,7 @@ namespace FusionExamples.Tanknarok
 
         private void ShowOpen()
         {
-            OnOpen?.Invoke(_data, _playerId);
+            OnOpen?.Invoke(_lootData, _playerId);
 
             _open.Toggle(true);
 
