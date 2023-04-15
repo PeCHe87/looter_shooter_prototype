@@ -24,13 +24,13 @@ namespace FusionExamples.Tanknarok
 
         private int _slotItemId = default;
         private int _slotAmount = default;
-        private System.Action<int> _callbackTake = default;
+        private System.Action<int, int> _callbackTake = default;
 
         #endregion
 
         #region Public methods
 
-        public void Init(System.Action<int> callback)
+        public void Init(System.Action<int, int> callback)
         {
             Debug.LogError("<color=magenta>LootInGamePanel</color>::Init");
 
@@ -102,7 +102,7 @@ namespace FusionExamples.Tanknarok
 
                 Debug.LogError($"Take item <color=yellow>{displayName}</color>(<color=magenta>{_slotAmount}</color>)");
 
-                _callbackTake?.Invoke(_slotItemId);
+                _callbackTake?.Invoke(_slotItemId, _slotAmount);
 
                 return;
             }

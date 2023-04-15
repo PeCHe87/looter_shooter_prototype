@@ -25,6 +25,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private Panel _uiProgress;
 		[SerializeField] private Panel _uiRoom;
 		[SerializeField] private GameObject _uiGame;
+		[SerializeField] private GameObject _uiLevel;
 		[SerializeField] private TMP_InputField _txtDisplayName;
 		[SerializeField] private Button _btnTeamBlue;
 		[SerializeField] private Image _iconBlue;
@@ -229,8 +230,9 @@ namespace FusionExamples.Tanknarok
 			_uiStart.SetVisible(intro);
 			_uiProgress.SetVisible(progress);
 			_uiGame.SetActive(running);
-			
-			if(intro)
+			_uiLevel.Toggle(running);
+
+			if (intro)
 				MusicPlayer.instance.SetLowPassTranstionDirection( -1f);
 		}
 

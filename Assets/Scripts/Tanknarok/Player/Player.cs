@@ -210,6 +210,8 @@ namespace FusionExamples.Tanknarok
 				SetMapIndicator(this.team);
 				SetLocal();
 
+				InitializeInventory();
+
 				RPC_SetInformation(displayName, team);
 			}
 			else
@@ -1098,13 +1100,14 @@ namespace FusionExamples.Tanknarok
 		///		- Add item to the player's inventory
 		/// </summary>
 		/// <param name="id"></param>
-		public void TakeItemFromLoot(int id)
+		public void TakeItemFromLoot(int id, int amount)
         {
 			if (_lootbox == null) return;
 
 			RPC_TakeItemFromLoot(id);
 
 			// TODO: player inventory should be updated
+			AddItemToInventory(id, amount);
 
 			_lootInGamePanel?.Remove(id);
 		}
@@ -1118,6 +1121,70 @@ namespace FusionExamples.Tanknarok
 		public void RPC_TakeItemFromLoot(int id, RpcInfo info = default)
         {
 			_lootbox.Take(id);
+		}
+
+		#endregion
+
+		#region Inventory
+
+		[SerializeField] private UI_InventoryPanel _inventoryPanel = default;
+
+		[Networked] public ref PlayerInventoryData _inventoryData => ref MakeRef<PlayerInventoryData>();
+
+		public void InitializeInventory()
+        {
+			_inventoryPanel = FindObjectOfType<UI_InventoryPanel>();
+
+			// Mark as locked the last slots
+			var lockedItem = new PlayerInventoryItemData()
+			{
+				id = -1,
+				amount = 0,
+				locked = true
+			};
+
+			_inventoryData.items.Set(5, lockedItem);
+			_inventoryData.items.Set(6, lockedItem);
+			_inventoryData.items.Set(7, lockedItem);
+			_inventoryData.items.Set(8, lockedItem);
+			_inventoryData.items.Set(9, lockedItem);
+			_inventoryData.items.Set(10, lockedItem);
+			_inventoryData.items.Set(11, lockedItem);
+			_inventoryData.items.Set(12, lockedItem);
+			_inventoryData.items.Set(13, lockedItem);
+			_inventoryData.items.Set(14, lockedItem);
+			_inventoryData.items.Set(15, lockedItem);
+
+			// Update UI
+			_inventoryPanel.Init(_inventoryData);
+        }
+
+		private void AddItemToInventory(int id, int amount)
+        {
+			var itemAlreadyExit = _inventoryData.AlreadyExist(id, out var slotIndex);
+
+			if (!itemAlreadyExit)
+            {
+				// Get first free slot
+				slotIndex = _inventoryData.GetFreeSlotIndex();
+            }
+
+			if (slotIndex == -1)
+            {
+				Debug.LogError("Inventory is FULL!");
+
+				return;
+            }
+
+			var item = new PlayerInventoryItemData()
+			{
+				id = id,
+				amount = amount
+			};
+
+			_inventoryData.items.Set(slotIndex, item);
+
+			_inventoryPanel.Refresh(_inventoryData);
 		}
 
 		#endregion
