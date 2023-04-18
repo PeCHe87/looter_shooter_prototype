@@ -32,6 +32,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private TankTeleportInEffect _teleportIn;
 		[SerializeField] private TankTeleportOutEffect _teleportOut;
 		[SerializeField] private PlayerFloatingHud _hud = default;
+		[SerializeField] private UI_PlayerInfoPanel _playerInfoPanel = default;
 
 		[Space(10)]
 		[SerializeField] private GameObject _deathExplosionPrefab;
@@ -209,6 +210,8 @@ namespace FusionExamples.Tanknarok
 
 				SetMapIndicator(this.team);
 				SetLocal();
+
+				InitializePlayerInfoPanel();
 
 				InitializeInventory();
 
@@ -438,6 +441,8 @@ namespace FusionExamples.Tanknarok
 				Debug.Log($"Player {playerID} took {damage} damage, life = {life}");
 			}
 
+			_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+
 			invulnerabilityTimer = TickTimer.CreateFromSeconds(Runner, 0.1f);
 
 			if (Runner.Stage == SimulationStages.Forward)
@@ -465,6 +470,8 @@ namespace FusionExamples.Tanknarok
 
 				// Restore health
 				life = MAX_HEALTH;
+
+				_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
 
 				// Start the respawn timer and trigger the teleport in effect
 				respawnTimer = TickTimer.CreateFromSeconds(Runner, 1);
@@ -856,6 +863,8 @@ namespace FusionExamples.Tanknarok
 			this.amountCollectables += amount;
 
 			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
+
+			_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables);
 		}
 
 		public static void OnCollectablesChanged(Changed<Player> changed)
@@ -877,6 +886,8 @@ namespace FusionExamples.Tanknarok
 			this.amountCollectables = 0;
 
 			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
+
+			_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables);
 		}
 
 		#endregion
@@ -910,6 +921,8 @@ namespace FusionExamples.Tanknarok
 			this.amountCollectables = 0;
 
 			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
+
+			_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables);
 		}
 
 		#endregion
@@ -924,6 +937,10 @@ namespace FusionExamples.Tanknarok
 
 			_hud.SetDisplayName(this.displayName);
 			_hud.SetTeam(this.team);
+
+			_playerInfoPanel.SetDisplayName(this.displayName);
+
+			_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
 
 			targetDetector.SetTeam(this.team);
 
@@ -1019,6 +1036,12 @@ namespace FusionExamples.Tanknarok
 
 			_hud.SetDisplayName(this.displayName);
 			_hud.SetTeam(this.team);
+		}
+
+		private void InitializePlayerInfoPanel()
+        {
+			_playerInfoPanel = FindObjectOfType<UI_PlayerInfoPanel>();
+			_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
 		}
 
 		#endregion
