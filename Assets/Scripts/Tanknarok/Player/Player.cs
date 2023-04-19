@@ -441,7 +441,10 @@ namespace FusionExamples.Tanknarok
 				Debug.Log($"Player {playerID} took {damage} damage, life = {life}");
 			}
 
-			_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+			if (_isLocal)
+			{
+				_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+			}
 
 			invulnerabilityTimer = TickTimer.CreateFromSeconds(Runner, 0.1f);
 
@@ -471,7 +474,10 @@ namespace FusionExamples.Tanknarok
 				// Restore health
 				life = MAX_HEALTH;
 
-				_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+				if (_isLocal)
+				{
+					_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+				}
 
 				// Start the respawn timer and trigger the teleport in effect
 				respawnTimer = TickTimer.CreateFromSeconds(Runner, 1);
@@ -534,14 +540,16 @@ namespace FusionExamples.Tanknarok
 		{
 			TeardownLootboxInteraction();
 
+			TeardownInventory();
+
 			Destroy(_deathExplosionInstance);
+			
 			PlayerManager.RemovePlayer(this);
 		}
 
 		public void DespawnTank()
 		{
-			if (state == State.Dead)
-				return;
+			if (state == State.Dead) return;
 
 			state = State.Despawned;
 		}
@@ -862,9 +870,12 @@ namespace FusionExamples.Tanknarok
 
 			this.amountCollectables += amount;
 
-			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
+			//_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
 
-			_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables);
+			if (_isLocal)
+			{
+				_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables);
+			}
 		}
 
 		public static void OnCollectablesChanged(Changed<Player> changed)
@@ -887,7 +898,10 @@ namespace FusionExamples.Tanknarok
 
 			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
 
-			_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables);
+			if (_isLocal)
+			{
+				_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables);
+			}
 		}
 
 		#endregion
@@ -920,9 +934,12 @@ namespace FusionExamples.Tanknarok
 
 			this.amountCollectables = 0;
 
-			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
+			//_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
 
-			_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables);
+			if (_isLocal)
+			{
+				_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables);
+			}
 		}
 
 		#endregion
@@ -936,11 +953,13 @@ namespace FusionExamples.Tanknarok
 			this.team = team;
 
 			_hud.SetDisplayName(this.displayName);
-			_hud.SetTeam(this.team);
+			//_hud.SetTeam(this.team);
 
-			_playerInfoPanel.SetDisplayName(this.displayName);
-
-			_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+			if (_isLocal)
+			{
+				_playerInfoPanel.SetDisplayName(this.displayName);
+				_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+			}
 
 			targetDetector.SetTeam(this.team);
 
@@ -1035,13 +1054,14 @@ namespace FusionExamples.Tanknarok
 			_hud = floatingHud;
 
 			_hud.SetDisplayName(this.displayName);
-			_hud.SetTeam(this.team);
+			//_hud.SetTeam(this.team);
 		}
 
 		private void InitializePlayerInfoPanel()
         {
 			_playerInfoPanel = FindObjectOfType<UI_PlayerInfoPanel>();
 			_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+			_playerInfoPanel.UpdateCollectables(0, _maxCollectables);
 		}
 
 		#endregion
@@ -1179,7 +1199,12 @@ namespace FusionExamples.Tanknarok
 			_inventoryData.items.Set(15, lockedItem);
 
 			// Update UI
-			_inventoryPanel.Init(_inventoryData);
+			_inventoryPanel.Init(_inventoryData, this);
+        }
+
+		public void TeardownInventory()
+        {
+			_inventoryPanel.Teardown();
         }
 
 		private void AddItemToInventory(int id, int amount)
@@ -1208,6 +1233,42 @@ namespace FusionExamples.Tanknarok
 			_inventoryData.items.Set(slotIndex, item);
 
 			_inventoryPanel.Refresh(_inventoryData);
+		}
+
+		public void ConsumeInventorySlot(int slotIndex)
+        {
+			var item = _inventoryData.items.Get(slotIndex);
+
+			item.amount--;
+
+			// Check if it is empty
+			if (item.amount == 0)
+            {
+				item.id = 0;
+            }
+
+			_inventoryData.items.Set(slotIndex, item);
+
+			_inventoryPanel.Refresh(_inventoryData);
+		}
+
+		#endregion
+
+		#region Health
+
+		public void Heal(int amount)
+		{
+			life = (byte)Mathf.Clamp(life + amount, 0, MAX_HEALTH);
+
+			if (_isLocal)
+			{
+				_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+			}
+
+			if (Runner.Stage == SimulationStages.Forward)
+			{
+				_damageVisuals.OnDamaged(life, isDead);
+			}
 		}
 
 		#endregion

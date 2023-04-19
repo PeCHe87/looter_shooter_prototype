@@ -19,7 +19,6 @@ namespace FusionExamples.Tanknarok
 
         #region Inspector
 
-        [SerializeField] private LootboxData _data = default;
         [SerializeField] private MeshRenderer _loading;
         [SerializeField] private GameObject _open;
         [SerializeField] private float _openingTime = 4;

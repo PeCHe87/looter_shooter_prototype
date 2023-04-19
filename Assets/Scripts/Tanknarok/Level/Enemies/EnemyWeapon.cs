@@ -112,6 +112,8 @@ namespace FusionExamples.Tanknarok
 		{
 			if (powerupType == PowerupType.EMPTY || _gunExits.Length == 0) return;
 
+			// TODO: show muzzle
+
 			var exit = GetExitPoint();
 			SpawnNetworkShot(owner, exit, ownerVelocity);
 

@@ -39,26 +39,6 @@ namespace FusionExamples.Tanknarok.Gameplay
 
         #endregion
 
-        #region Unity events
-
-        private void Update()
-        {
-            if (!_initialized) return;
-
-            // Process detection
-            _detectionAbility.Tick(Time.deltaTime);
-
-            // Process attack
-            var targetPosition = (_detectionAbility.TargetFound) ? _detectionAbility.Target.transform.position : _transform.forward;
-            _attackAbility.Tick(Time.deltaTime, targetPosition);
-
-            CheckChaseStatus();
-
-            CheckAttackStatus();
-        }
-
-        #endregion
-
         #region Network methods
 
         public override void Spawned()
@@ -84,7 +64,12 @@ namespace FusionExamples.Tanknarok.Gameplay
             _detectionAbility.Init(_radiusDetection);
 
             _attackAbility = GetComponent<EnemyAttackAbility>();
-            _attackAbility.Init(_levelManager.Runner, _id, _attackRate, _attackDistance);
+
+            //_attackAbility.Init(_levelManager.Runner, _id, _attackRate, _attackDistance);
+            if (HasStateAuthority)
+            {
+                _attackAbility.Init(Runner, _id, _attackRate, _attackDistance);
+            }
 
             _status = EnemyStatus.IDLE;
 
@@ -94,6 +79,35 @@ namespace FusionExamples.Tanknarok.Gameplay
             }
 
             _initialized = true;
+        }
+
+        public override void FixedUpdateNetwork()
+        {
+            if (!HasStateAuthority) return;
+
+            UpdateBehavior();
+        }
+
+        #endregion
+
+        #region Private methods
+
+        private void UpdateBehavior()
+        {
+            if (!_initialized) return;
+
+            var deltaTime = Runner.DeltaTime;   // Time.deltaTime;
+
+            // Process detection
+            _detectionAbility.Tick(deltaTime);
+
+            // Process attack
+            var targetPosition = (_detectionAbility.TargetFound) ? _detectionAbility.Target.transform.position : _transform.forward;
+            _attackAbility.Tick(deltaTime, targetPosition);
+
+            CheckChaseStatus();
+
+            CheckAttackStatus();
         }
 
         #endregion

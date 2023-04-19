@@ -96,9 +96,9 @@ namespace FusionExamples.Tanknarok
 
         private void Take()
         {
-            if (_levelManager.Catalog.TryGetItem(_slotItemId, out var itemData))
+            if (_levelManager.Catalog.TryGetItem(_slotItemId, out var itemCatalog))
             {
-                var displayName = itemData.displayName;
+                var displayName = itemCatalog.data.displayName;
 
                 Debug.LogError($"Take item <color=yellow>{displayName}</color>(<color=magenta>{_slotAmount}</color>)");
 
@@ -205,12 +205,12 @@ namespace FusionExamples.Tanknarok
 
                 if (itemLootData.amount <= 0) continue;
 
-                var itemExist = _levelManager.Catalog.TryGetItem(itemLootData.id, out var itemCatalogData);
+                var itemExist = _levelManager.Catalog.TryGetItem(itemLootData.id, out var itemCatalog);
 
                 if (!itemExist) continue;
 
                 var slot = _slots[index];
-                slot.Setup(itemLootData.id, itemLootData.amount, itemCatalogData.icon);
+                slot.Setup(itemLootData.id, itemLootData.amount, itemCatalog.data.icon);
                 slot.gameObject.Toggle(true);
 
                 index++;
