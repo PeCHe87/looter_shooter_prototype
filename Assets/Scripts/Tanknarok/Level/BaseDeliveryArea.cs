@@ -141,6 +141,7 @@ namespace FusionExamples.Tanknarok
         private void ShowCompletion()
         {
             _iconCompleted.enabled = true;
+            _iconActive.enabled = false;
         }
 
         #endregion

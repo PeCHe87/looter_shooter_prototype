@@ -443,7 +443,7 @@ namespace FusionExamples.Tanknarok
 
 			if (_isLocal)
 			{
-				_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+				_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH, "APPLY DAMAGE");
 			}
 
 			invulnerabilityTimer = TickTimer.CreateFromSeconds(Runner, 0.1f);
@@ -476,7 +476,7 @@ namespace FusionExamples.Tanknarok
 
 				if (_isLocal)
 				{
-					_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+					_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH, "CHECK RESPAWN");
 				}
 
 				// Start the respawn timer and trigger the teleport in effect
@@ -874,7 +874,7 @@ namespace FusionExamples.Tanknarok
 
 			if (_isLocal)
 			{
-				_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables);
+				_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables, "PICKUP");
 			}
 		}
 
@@ -900,7 +900,7 @@ namespace FusionExamples.Tanknarok
 
 			if (_isLocal)
 			{
-				_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables);
+				_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables, "DEATH");
 			}
 		}
 
@@ -938,7 +938,7 @@ namespace FusionExamples.Tanknarok
 
 			if (_isLocal)
 			{
-				_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables);
+				_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables, "DELIVER");
 			}
 		}
 
@@ -958,7 +958,7 @@ namespace FusionExamples.Tanknarok
 			if (_isLocal)
 			{
 				_playerInfoPanel.SetDisplayName(this.displayName);
-				_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+				_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH, "RPC SET INFORMATION");
 			}
 
 			targetDetector.SetTeam(this.team);
@@ -1060,8 +1060,8 @@ namespace FusionExamples.Tanknarok
 		private void InitializePlayerInfoPanel()
         {
 			_playerInfoPanel = FindObjectOfType<UI_PlayerInfoPanel>();
-			_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
-			_playerInfoPanel.UpdateCollectables(0, _maxCollectables);
+			_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH, "INITIALIZATION");
+			_playerInfoPanel.UpdateCollectables(0, _maxCollectables, "INITIALIZATION");
 		}
 
 		#endregion
@@ -1149,7 +1149,7 @@ namespace FusionExamples.Tanknarok
 
 			RPC_TakeItemFromLoot(id);
 
-			// TODO: player inventory should be updated
+			// Player's inventory should be updated
 			AddItemToInventory(id, amount);
 
 			_lootInGamePanel?.Remove(id);
@@ -1224,6 +1224,13 @@ namespace FusionExamples.Tanknarok
 				return;
             }
 
+			// Add the amount of already existing item
+			if (itemAlreadyExit)
+            {
+				var existingItem = _inventoryData.items.Get(slotIndex);
+				amount += existingItem.amount;
+            }
+
 			var item = new PlayerInventoryItemData()
 			{
 				id = id,
@@ -1262,7 +1269,7 @@ namespace FusionExamples.Tanknarok
 
 			if (_isLocal)
 			{
-				_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH);
+				_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH, "HEAL");
 			}
 
 			if (Runner.Stage == SimulationStages.Forward)

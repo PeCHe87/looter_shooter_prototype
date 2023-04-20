@@ -16,6 +16,11 @@ namespace FusionExamples.Tanknarok.UI
 
         [Header("Charger info")]
         [SerializeField] private Image _chargerFill = default;
+        [SerializeField] private Image _chargerIcon = default;
+        [SerializeField] private Sprite _chargerEmpty = default;
+        [SerializeField] private Sprite _chargerQuarter = default;
+        [SerializeField] private Sprite _chargerHalf = default;
+        [SerializeField] private Sprite _chargerFull = default;
 
         #endregion
 
@@ -35,16 +40,20 @@ namespace FusionExamples.Tanknarok.UI
             _txtName.text = displayName.ToUpperInvariant();
         }
 
-        public void UpdateHealth(int amount, int max)
+        public void UpdateHealth(int amount, int max, string origin)
         {
             var progress = Mathf.Clamp((float)amount / (float)max, 0, 1);
+
+            Debug.LogError($"UpdateHealth -> progress <color=yellow>{progress}</color>, origin: <color=cyan>{origin}</color>");
 
             RefreshHealthProgress(progress);
         }
 
-        public void UpdateCollectables(int amount, int max)
+        public void UpdateCollectables(int amount, int max, string origin)
         {
             var progress = Mathf.Clamp((float)amount / (float)max, 0, 1);
+
+            Debug.LogError($"UpdateEnergy -> progress <color=yellow>{progress}</color>, origin: <color=cyan>{origin}</color>");
 
             RefreshCollectableProgress(progress);
         }
@@ -61,6 +70,23 @@ namespace FusionExamples.Tanknarok.UI
         private void RefreshCollectableProgress(float progress)
         {
             _chargerFill.fillAmount = progress;
+
+            var sprite = _chargerEmpty;
+
+            if (progress == 1)
+            {
+                sprite = _chargerFull;
+            }
+            else if (progress >= 0.5f)
+            {
+                sprite = _chargerHalf;
+            }
+            else if (progress >= 0.25f)
+            {
+                sprite = _chargerQuarter;
+            }
+
+            _chargerIcon.sprite = sprite;
         }
 
         #endregion

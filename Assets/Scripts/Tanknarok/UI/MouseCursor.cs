@@ -13,9 +13,9 @@ namespace FusionExamples.Tanknarok
 			{
 				_rect = GetComponent<RectTransform>();
 
-				if (!Application.isEditor)
-					Cursor.visible = false;
-				Cursor.lockState = _cursorLockState;
+				//if (!Application.isEditor)
+				//	Cursor.visible = false;
+				//Cursor.lockState = _cursorLockState;
 			}
 			else
 				gameObject.SetActive(false);

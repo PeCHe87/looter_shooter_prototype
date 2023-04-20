@@ -36,6 +36,7 @@ namespace FusionExamples.Tanknarok
         [Networked(OnChanged = nameof(OnIsOpenChanged))] private NetworkBool _isOpen { get; set; }
         [Networked] private string _playerId { get; set; }
         [Networked] public ref LootData _lootData => ref MakeRef<LootData>();
+        [Networked] protected NetworkBool _isEmpty { get; set; }
 
         #endregion
 
@@ -43,6 +44,8 @@ namespace FusionExamples.Tanknarok
 
         public void StartInteracting(string id, GameLauncher.TeamEnum team)
         {
+            if (_isEmpty) return;
+
             if (_isOccupied) return;
 
             if (_isOpening) return;
@@ -84,7 +87,15 @@ namespace FusionExamples.Tanknarok
 
                 break;
             }
+
+            var isEmpty = CheckEmpty();
+
+            if (!isEmpty) return;
+
+            Empty();
         }
+
+        protected virtual void Empty(){}
 
         #endregion
 
@@ -160,6 +171,24 @@ namespace FusionExamples.Tanknarok
         private void RefreshOpeningProgress(float progress)
         {
             _loading.material.SetFloat("_Recharge", progress);
+        }
+
+        private bool CheckEmpty()
+        {
+            var isEmpty = true;
+
+            for (int i = 0; i < _lootData.items.Length; i++)
+            {
+                var item = _lootData.items[i];
+
+                if (item.amount == 0) continue;
+
+                isEmpty = false;
+
+                break;
+            }
+
+            return isEmpty;
         }
 
         #endregion

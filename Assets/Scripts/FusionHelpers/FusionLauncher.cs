@@ -61,7 +61,7 @@ namespace FusionExamples.FusionHelpers
 				SessionName = room,
 				ObjectPool = _pool,
 				SceneManager = sceneLoader,
-				DisableNATPunchthrough = true
+				//DisableNATPunchthrough = true
 			});
 		}
 
