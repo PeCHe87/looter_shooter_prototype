@@ -15,26 +15,44 @@ namespace FusionExamples.Tanknarok
 	/// </summary>
 	public class LevelManager : NetworkSceneManagerBase
 	{
-		[SerializeField] private int _lobby;
+        #region Inspector
+
+        [SerializeField] private int _lobby;
 		[SerializeField] private int[] _levels;
 		[SerializeField] private LevelBehaviour _currentLevel;
 		[SerializeField] private CameraScreenFXBehaviour _transitionEffect;
 		[SerializeField] private AudioEmitter _audioEmitter;
 		[SerializeField] private Camera _camera = default;
 		[SerializeField] private CatalogData _catalog = default;
-		
+		[SerializeField] private PlayerDeathLoot _playerDeathLoot = default;
 		[SerializeField] private float _spawnRadius = 10;
+		[SerializeField] private UI_PlayerKillPlayerPanel _playerKillsPanel = default;
 
-		private Scene _loadedScene;
+        #endregion
+
+        #region Private properties
+
+        private Scene _loadedScene;
 		private ScoreManager _scoreManager;
 		private ReadyupManager _readyupManager;
 		private CountdownManager _countdownManager;
 
-		public FusionLauncher launcher { get; set; }
+        #endregion
+
+        #region Public properties
+
+        public FusionLauncher launcher { get; set; }
 		public Camera Camera => _camera;
 		public CatalogData Catalog => _catalog;
+		public LevelBehaviour LevelBehavior => _currentLevel;
+		public PlayerDeathLoot PlayerDeathLoot => _playerDeathLoot;
+		public NetworkRunner LevelRunner => Runner;
 
-		private void Awake()
+        #endregion
+
+        #region Unity events
+
+        private void Awake()
 		{
 			_scoreManager = FindObjectOfType<ScoreManager>(true);
 			_readyupManager = FindObjectOfType<ReadyupManager>(true);
@@ -45,18 +63,12 @@ namespace FusionExamples.Tanknarok
 			_readyupManager.HideUI();
 		}
 
-		protected override void Shutdown(NetworkRunner runner)
-		{
-			base.Shutdown(runner);
-			_currentLevel = null;
-			if(_loadedScene!=default)
-				SceneManager.UnloadSceneAsync(_loadedScene);
-			_loadedScene = default;
-			PlayerManager.ResetPlayerManager();
-		}
+        #endregion
 
-		// Get a random level
-		public int GetRandomLevelIndex()
+        #region Public methods
+
+        // Get a random level
+        public int GetRandomLevelIndex()
 		{
 			int idx = Random.Range(0, _levels.Length);
 			// Make sure it's not the same level again. This is partially because it's more fun to try different levels and partially because scene handling breaks if trying to load the same scene again.
@@ -86,6 +98,25 @@ namespace FusionExamples.Tanknarok
 			Runner.SetActiveScene(nextLevelIndex < 0 ? _lobby:_levels[nextLevelIndex]);
 		}
 
+		public void RefreshPlayerKills(string killer, string killed, Color teamColor)
+        {
+			_playerKillsPanel.ShowMessage(killer, killed, teamColor);
+        }
+
+		#endregion
+
+		#region Protected methods
+
+		protected override void Shutdown(NetworkRunner runner)
+		{
+			base.Shutdown(runner);
+			_currentLevel = null;
+			if(_loadedScene!=default)
+				SceneManager.UnloadSceneAsync(_loadedScene);
+			_loadedScene = default;
+			PlayerManager.ResetPlayerManager();
+		}
+		
 		protected override IEnumerator SwitchScene(SceneRef prevScene, SceneRef newScene, FinishedLoadingDelegate finished)
 		{
 			Debug.Log($"Switching Scene from {prevScene} to {newScene}");
@@ -173,7 +204,11 @@ namespace FusionExamples.Tanknarok
 			StartCoroutine(SwitchScenePostFadeIn(prevScene, newScene, winner));
 		}
 
-		IEnumerator SwitchScenePostFadeIn(SceneRef prevScene, SceneRef newScene, int winner)
+        #endregion
+
+        #region Private methods
+
+        IEnumerator SwitchScenePostFadeIn(SceneRef prevScene, SceneRef newScene, int winner)
 		{
 			Debug.Log("SwitchScene post effect");
 
@@ -229,5 +264,7 @@ namespace FusionExamples.Tanknarok
 		    }));
 	    }
 		}
-	}
+
+        #endregion
+    }
 }

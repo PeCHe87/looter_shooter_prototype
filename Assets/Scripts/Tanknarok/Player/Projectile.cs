@@ -10,8 +10,14 @@ namespace FusionExamples.Tanknarok
 		private Vector3 _interpolateTo;
 		private NetworkTransform _nt;
 		protected EntityType _entityType = EntityType.NONE;
+		protected Player _owner = default;
 
 		public abstract void InitNetworkState(Vector3 ownerVelocity, EntityType type = EntityType.NONE);
+
+		public void SetOwner(Player player)
+        {
+			_owner = player;
+        }
 
 		/// <summary>
 		/// The following methods implement support for Fusions spawn prediction.

@@ -60,5 +60,57 @@ namespace FusionExamples.Tanknarok.Items
 
             return index;
         }
+
+        /// <summary>
+        /// Set all item slots as empty
+        /// </summary>
+        public void SetEmpty()
+        {
+            var emptyItem = new PlayerInventoryItemData()
+            {
+                id = 0,
+                amount = 0
+            };
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                var itemData = items.Get(i);
+
+                // Skip locked slots
+                if (itemData.locked) continue;
+
+                items.Set(i, emptyItem);
+            }
+        }
+
+        public bool IsEmpty()
+        {
+            for (int i = 0; i < items.Length; i++)
+            {
+                var item = items.Get(i);
+
+                if (item.locked) continue;
+
+                if (item.IsEmpty()) continue;
+
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool IsFull()
+        {
+            for (int i = 0; i < items.Length; i++)
+            {
+                var item = items.Get(i);
+
+                if (item.locked) continue;
+
+                if (item.IsEmpty()) return false;
+            }
+
+            return true;
+        }
     }
 }

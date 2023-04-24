@@ -44,7 +44,7 @@ namespace FusionExamples.Tanknarok
 					Player player = hit.collider.GetComponentInParent<Player>();
 					if (player != null)
 					{
-						player.ApplyDamage(Vector3.zero, _damage, PlayerRef.None);
+						player.ApplyDamage(Vector3.zero, _damage, PlayerRef.None, null);
 					}
 				}
 			}

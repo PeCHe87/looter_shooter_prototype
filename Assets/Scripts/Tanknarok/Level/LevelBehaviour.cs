@@ -16,11 +16,13 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private LevelLighting _levelLighting;
 		[SerializeField] private Transform _spawnPointBlue = default;
 		[SerializeField] private Transform _spawnPointRed = default;
+		[SerializeField] private Transform _lootsContainer = default;
 
 		private SpawnPoint[] _playerSpawnPoints;
 
 		public Transform SpawnPointBlue => _spawnPointBlue;
 		public Transform SpawnPointRed => _spawnPointRed;
+		public Transform LootsContainer => _lootsContainer;
 
 		private void Awake()
 		{

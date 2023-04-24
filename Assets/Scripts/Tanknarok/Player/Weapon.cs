@@ -154,9 +154,13 @@ namespace FusionExamples.Tanknarok
 			var key = new NetworkObjectPredictionKey {Byte0 = (byte) rawEncoded, Byte1 = (byte) runner.Simulation.Tick};
 			runner.Spawn(_projectilePrefab, exit.position, exit.rotation, owner, (runner, obj) =>
 			{
-				var entityType = (player.team == GameLauncher.TeamEnum.BLUE) ? EntityType.PLAYER_TEAM_BLUE : EntityType.PLAYER_TEAM_RED; 
+				var entityType = (player.team == GameLauncher.TeamEnum.BLUE) ? EntityType.PLAYER_TEAM_BLUE : EntityType.PLAYER_TEAM_RED;
 
-				obj.GetComponent<Projectile>().InitNetworkState(ownerVelocity, entityType);
+				var projectile = obj.GetComponent<Projectile>();
+
+				projectile.SetOwner(player);
+				projectile.InitNetworkState(ownerVelocity, entityType);
+
 			}, key );
 		}
 

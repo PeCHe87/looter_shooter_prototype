@@ -25,14 +25,17 @@ namespace FusionExamples.Tanknarok
         private int _slotItemId = default;
         private int _slotAmount = default;
         private System.Action<int, int> _callbackTake = default;
+        private Player _player = default;
 
         #endregion
 
         #region Public methods
 
-        public void Init(System.Action<int, int> callback)
+        public void Init(Player player, System.Action<int, int> callback)
         {
             Debug.LogError("<color=magenta>LootInGamePanel</color>::Init");
+
+            _player = player;
 
             _callbackTake = callback;
 
@@ -96,6 +99,15 @@ namespace FusionExamples.Tanknarok
 
         private void Take()
         {
+            // Check if player's inventory is already full
+            if (_player.IsInventoryFull())
+            {
+                Debug.LogError($"INVENTORY IS FULL!");
+
+                return;
+            }
+
+            // Get item information
             if (_levelManager.Catalog.TryGetItem(_slotItemId, out var itemCatalog))
             {
                 var displayName = itemCatalog.data.displayName;

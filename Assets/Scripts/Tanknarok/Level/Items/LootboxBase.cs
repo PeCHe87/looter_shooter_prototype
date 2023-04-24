@@ -97,6 +97,18 @@ namespace FusionExamples.Tanknarok
 
         protected virtual void Empty(){}
 
+        public void Configure(int id, ItemLootData[] items) 
+        {
+            _lootData = new LootData();
+
+            _lootData.id = id;
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                _lootData.items.Set(i, items[i]);
+            }
+        }
+
         #endregion
 
         #region Networked methods

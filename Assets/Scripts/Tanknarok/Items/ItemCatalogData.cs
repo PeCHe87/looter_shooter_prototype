@@ -11,7 +11,6 @@ namespace FusionExamples.Tanknarok.Items
     [System.Serializable]
     public class ItemCatalogData
     {
-        public int id;
         public BaseItemCatalogData data;
     }
 }

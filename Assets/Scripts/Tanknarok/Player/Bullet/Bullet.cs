@@ -295,7 +295,7 @@ namespace FusionExamples.Tanknarok
 							Vector3 impulse = other.transform.position - hitPoint;
 							float l = Mathf.Clamp(_bulletSettings.areaRadius - impulse.magnitude, 0, _bulletSettings.areaRadius);
 							impulse = _bulletSettings.areaImpulse * l * impulse.normalized;
-							target.ApplyDamage(impulse, _bulletSettings.areaDamage, Object.InputAuthority);
+							target.ApplyDamage(impulse, _bulletSettings.areaDamage, Object.InputAuthority, _owner);
 						}
 					}
 				}

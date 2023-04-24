@@ -10,9 +10,9 @@ namespace FusionExamples.Tanknarok.Items
 
         public bool TryGetItem(int id, out ItemCatalogData item)
         {
-            item = _items.FirstOrDefault( x => x.id == id );
+            item = _items.FirstOrDefault( x => x.data.id == id );
 
-            return item.id != 0;
+            return item.data.id != 0;
         }
     }
 }

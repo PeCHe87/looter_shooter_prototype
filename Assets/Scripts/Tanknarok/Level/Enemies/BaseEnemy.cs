@@ -226,7 +226,7 @@ namespace FusionExamples.Tanknarok.Gameplay
 
         [Networked] public byte _netHealth { get; set; }
 
-        public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef source)
+        public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef source, Player projectileOwner)
         {
             if (_status == EnemyStatus.DEAD) return;
 

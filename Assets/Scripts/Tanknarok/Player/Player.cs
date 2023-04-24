@@ -83,6 +83,8 @@ namespace FusionExamples.Tanknarok
 		public string displayName { get; set; }
 		[Networked(OnChanged = nameof(OnTeamChanged))]
 		public TeamEnum team { get; set; }
+		[Networked] string lastKilledPlayer { get; set; }
+		[Networked(OnChanged = nameof(OnKillsChanged))] public byte kills { get; set; }
 
 		#endregion
 
@@ -191,6 +193,8 @@ namespace FusionExamples.Tanknarok
 
 			if (Object.HasInputAuthority)
 				local = this;
+
+			GetLevelManager();
 
 			var isLocal = Object.HasInputAuthority;
 
@@ -408,7 +412,7 @@ namespace FusionExamples.Tanknarok
 		/// <param name="impulse"></param>
 		/// <param name="damage"></param>
 		/// <param name="attacker"></param>
-		public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef attacker)
+		public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef attacker, Player projectileOwner)
 		{
 			if (!isActivated || !invulnerabilityTimer.Expired(Runner))
 				return;
@@ -432,6 +436,10 @@ namespace FusionExamples.Tanknarok
 				Respawn(_respawnTime);
 
 				RefreshCollectablesOnDeath();
+
+				SpawnDeathLoot();
+
+				CheckPlayerKiller(projectileOwner);
 
 				GameManager.instance.OnTankDeath();
 			}
@@ -609,6 +617,13 @@ namespace FusionExamples.Tanknarok
 					Runner.Despawn(Object);
 				}
 			}
+		}
+
+		private void CheckPlayerKiller(Player projectileOwner)
+        {
+			if (projectileOwner == null) return;
+
+			projectileOwner.IncrementKills(this);
 		}
 
 		#endregion
@@ -1082,7 +1097,7 @@ namespace FusionExamples.Tanknarok
 			if (!_isLocal) return;
 
             _lootInGamePanel = FindObjectOfType<UI_LootInGamePanel>();
-			_lootInGamePanel?.Init(TakeItemFromLoot);
+			_lootInGamePanel?.Init(this, TakeItemFromLoot);
         }
 
 		private void TeardownLootboxInteraction()
@@ -1204,7 +1219,7 @@ namespace FusionExamples.Tanknarok
 
 		public void TeardownInventory()
         {
-			_inventoryPanel.Teardown();
+			_inventoryPanel?.Teardown();
         }
 
 		private void AddItemToInventory(int id, int amount)
@@ -1259,6 +1274,42 @@ namespace FusionExamples.Tanknarok
 			_inventoryPanel.Refresh(_inventoryData);
 		}
 
+		private void SpawnDeathLoot()
+        {
+			// Check if inventory is empty
+			if (_inventoryData.IsEmpty()) return;
+
+			var amount = _inventoryData.items.Length;
+
+			var items = new ItemLootData[amount];
+
+            for (int i = 0; i < amount; i++)
+            {
+				var playerItem = _inventoryData.items.Get(i);
+				var lootItem = new ItemLootData()
+				{
+					id = playerItem.id,
+					amount = playerItem.amount
+				};
+
+				items[i] = lootItem;
+			}
+
+			// Create death body loot
+			_levelManager.PlayerDeathLoot.SpawnLoot(transform.position, items);
+
+			// Empty inventory
+			_inventoryData.SetEmpty();
+
+			// Update inventory panel
+			_inventoryPanel.Refresh(_inventoryData);
+		}
+
+		public bool IsInventoryFull()
+		{
+			return _inventoryData.IsFull();
+		}
+
 		#endregion
 
 		#region Health
@@ -1276,6 +1327,44 @@ namespace FusionExamples.Tanknarok
 			{
 				_damageVisuals.OnDamaged(life, isDead);
 			}
+		}
+
+        #endregion
+
+        #region Kills
+
+		public void IncrementKills(Player killed)
+        {
+			this.lastKilledPlayer = killed.displayName;
+			this.kills++;
+
+			// TODO: check if it is the player with higher kills amount
+
+			Debug.LogError($"Player {this.displayName} killed {killed.displayName}! New Kills amount <color=yellow>{this.kills}</color>");
+
+			//_levelManager.RefreshPlayerKills(this.displayName, killed.displayName);
+		}
+
+		public static void OnKillsChanged(Changed<Player> changed)
+		{
+			if (!changed.Behaviour) return;
+
+			var kills = changed.Behaviour.kills;
+
+			changed.LoadOld();
+
+			var oldKills = changed.Behaviour.kills;
+
+			if (kills <= oldKills) return;
+
+			changed.Behaviour.OnKillsChanged(changed.Behaviour.lastKilledPlayer);
+		}
+
+		private void OnKillsChanged(string killed)
+        {
+			//if (Object.HasStateAuthority) return;
+
+			_levelManager.RefreshPlayerKills(this.displayName, killed, (this.team == TeamEnum.BLUE) ? _colorTeamBlue : _colorTeamRed);
 		}
 
 		#endregion
