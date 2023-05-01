@@ -27,12 +27,14 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private PlayerDeathLoot _playerDeathLoot = default;
 		[SerializeField] private float _spawnRadius = 10;
 		[SerializeField] private UI_PlayerKillPlayerPanel _playerKillsPanel = default;
+		[SerializeField] private Material _materialBlueTeam = default;
+		[SerializeField] private Material _materialRedTeam = default;
 
-        #endregion
+		#endregion
 
-        #region Private properties
+		#region Private properties
 
-        private Scene _loadedScene;
+		private Scene _loadedScene;
 		private ScoreManager _scoreManager;
 		private ReadyupManager _readyupManager;
 		private CountdownManager _countdownManager;
@@ -102,6 +104,11 @@ namespace FusionExamples.Tanknarok
         {
 			_playerKillsPanel.ShowMessage(killer, killed, teamColor);
         }
+
+		public Material GetPlayerTeamMaterial(TeamEnum team)
+        {
+			return (team == TeamEnum.BLUE) ? _materialBlueTeam : _materialRedTeam;
+		}
 
 		#endregion
 

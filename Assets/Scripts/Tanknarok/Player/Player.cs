@@ -25,6 +25,7 @@ namespace FusionExamples.Tanknarok
 
 		[Header("Visuals")]
 		[SerializeField] private Transform _body;
+		[SerializeField] private MeshRenderer _bodyColorTeam;
 		[SerializeField] private Transform _hull;
 		[SerializeField] private Transform _turret;
 		[SerializeField] private Transform _visualParent;
@@ -217,9 +218,9 @@ namespace FusionExamples.Tanknarok
 
 				InitializePlayerInfoPanel();
 
-				InitializeInventory();
-
 				RPC_SetInformation(displayName, team);
+
+				//InitializeInventory();
 			}
 			else
 			{
@@ -967,6 +968,8 @@ namespace FusionExamples.Tanknarok
 			this.displayName = displayName;
 			this.team = team;
 
+			_bodyColorTeam.material = _levelManager.GetPlayerTeamMaterial(this.team);
+
 			_hud.SetDisplayName(this.displayName);
 			//_hud.SetTeam(this.team);
 
@@ -975,6 +978,8 @@ namespace FusionExamples.Tanknarok
 				_playerInfoPanel.SetDisplayName(this.displayName);
 				_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH, "RPC SET INFORMATION");
 			}
+			
+			InitializeInventory();
 
 			targetDetector.SetTeam(this.team);
 
@@ -1009,6 +1014,8 @@ namespace FusionExamples.Tanknarok
 		private void OnTeamChanged(TeamEnum team)
 		{
 			_hud.SetTeam(this.team);
+
+			_bodyColorTeam.material = _levelManager.GetPlayerTeamMaterial(this.team);
 
 			targetDetector.SetTeam(this.team);
 		}
@@ -1162,10 +1169,7 @@ namespace FusionExamples.Tanknarok
         {
 			if (_lootbox == null) return;
 
-			RPC_TakeItemFromLoot(id);
-
-			// Player's inventory should be updated
-			AddItemToInventory(id, amount);
+			RPC_TakeItemFromLoot(this.playerID, id, amount);
 
 			_lootInGamePanel?.Remove(id);
 		}
@@ -1176,9 +1180,14 @@ namespace FusionExamples.Tanknarok
 		/// <param name="id"></param>
 		/// <param name="info"></param>
 		[Rpc(RpcSources.InputAuthority, RpcTargets.All)]
-		public void RPC_TakeItemFromLoot(int id, RpcInfo info = default)
+		public void RPC_TakeItemFromLoot(int playerId, int id, int amount, RpcInfo info = default)
         {
+			if (playerId != this.playerID) return;
+
 			_lootbox.Take(id);
+
+			// Player's inventory should be updated
+			AddItemToInventory(id, amount);
 		}
 
 		#endregion
@@ -1201,20 +1210,17 @@ namespace FusionExamples.Tanknarok
 				locked = true
 			};
 
-			_inventoryData.items.Set(5, lockedItem);
-			_inventoryData.items.Set(6, lockedItem);
-			_inventoryData.items.Set(7, lockedItem);
-			_inventoryData.items.Set(8, lockedItem);
-			_inventoryData.items.Set(9, lockedItem);
-			_inventoryData.items.Set(10, lockedItem);
-			_inventoryData.items.Set(11, lockedItem);
-			_inventoryData.items.Set(12, lockedItem);
-			_inventoryData.items.Set(13, lockedItem);
-			_inventoryData.items.Set(14, lockedItem);
-			_inventoryData.items.Set(15, lockedItem);
+            for (int i = 5; i < _inventoryData.items.Length; i++)
+            {
+				_inventoryData.items.Set(i, lockedItem);
+			}
+
+			if (!_isLocal) return;
 
 			// Update UI
 			_inventoryPanel.Init(_inventoryData, this);
+
+			Debug.LogError($"Player::<color=magenta>InitializeInventory</color> -> player <color=yellow>{this.displayName}</color>");
         }
 
 		public void TeardownInventory()
@@ -1234,7 +1240,7 @@ namespace FusionExamples.Tanknarok
 
 			if (slotIndex == -1)
             {
-				Debug.LogError("Inventory is FULL!");
+				Debug.LogError("Inventory is <color=yellow>FULL</color>!");
 
 				return;
             }
@@ -1254,24 +1260,17 @@ namespace FusionExamples.Tanknarok
 
 			_inventoryData.items.Set(slotIndex, item);
 
-			_inventoryPanel.Refresh(_inventoryData);
+			// Only update visuals if it is the local player
+			if (!_isLocal) return;
+
+			Debug.LogError($"Player::<color=magenta>AddItemToInventory</color> -> item: <color=yellow>{item.id}</color> to slot: <color=yellow>{slotIndex}</color>");
+
+			_inventoryPanel?.Refresh(_inventoryData);
 		}
 
 		public void ConsumeInventorySlot(int slotIndex)
         {
-			var item = _inventoryData.items.Get(slotIndex);
-
-			item.amount--;
-
-			// Check if it is empty
-			if (item.amount == 0)
-            {
-				item.id = 0;
-            }
-
-			_inventoryData.items.Set(slotIndex, item);
-
-			_inventoryPanel.Refresh(_inventoryData);
+			RPC_ConsumeItem(this.playerID, slotIndex);
 		}
 
 		private void SpawnDeathLoot()
@@ -1279,12 +1278,51 @@ namespace FusionExamples.Tanknarok
 			// Check if inventory is empty
 			if (_inventoryData.IsEmpty()) return;
 
+			RPC_SpawnLootWhenDying(this.playerID);
+		}
+
+		public bool IsInventoryFull()
+		{
+			return _inventoryData.IsFull();
+		}
+
+		[Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+		public void RPC_ConsumeItem(int playerId, int slotIndex, RpcInfo info = default)
+		{
+			if (playerId != this.playerID) return;
+
+			var item = _inventoryData.items.Get(slotIndex);
+
+			item.amount--;
+
+			// Check if it is empty
+			if (item.amount == 0)
+			{
+				item.id = 0;
+			}
+
+			_inventoryData.items.Set(slotIndex, item);
+
+			if (!_isLocal) return;
+
+			Debug.LogError($"Player::<color=magenta>ConsumeInventorySlot</color> -> item: <color=yellow>{item.id}</color> from slot: <color=yellow>{slotIndex}</color>");
+
+			_inventoryPanel.Refresh(_inventoryData);
+		}
+
+		[Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+		public void RPC_SpawnLootWhenDying(int playerId, RpcInfo info = default)
+        {
+			if (playerId != this.playerID) return;
+
+			Debug.LogError($"Player::<color=magenta>SpawnDeathLoot</color> -> player <color=yellow>{this.displayName}</color>");
+
 			var amount = _inventoryData.items.Length;
 
 			var items = new ItemLootData[amount];
 
-            for (int i = 0; i < amount; i++)
-            {
+			for (int i = 0; i < amount; i++)
+			{
 				var playerItem = _inventoryData.items.Get(i);
 				var lootItem = new ItemLootData()
 				{
@@ -1295,19 +1333,19 @@ namespace FusionExamples.Tanknarok
 				items[i] = lootItem;
 			}
 
-			// Create death body loot
-			_levelManager.PlayerDeathLoot.SpawnLoot(transform.position, items);
+			if (Object.HasStateAuthority)
+			{
+				// Create death body loot
+				_levelManager.PlayerDeathLoot.SpawnLoot(transform.position, items);
+			}
 
 			// Empty inventory
 			_inventoryData.SetEmpty();
 
+			if (!_isLocal) return;
+
 			// Update inventory panel
 			_inventoryPanel.Refresh(_inventoryData);
-		}
-
-		public bool IsInventoryFull()
-		{
-			return _inventoryData.IsFull();
 		}
 
 		#endregion

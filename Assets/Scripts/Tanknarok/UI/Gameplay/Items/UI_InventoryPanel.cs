@@ -85,6 +85,7 @@ namespace FusionExamples.Tanknarok.UI
 
                     return;
                 }
+
                 if (!_levelManager.Catalog.TryGetItem(playerItem.id, out var itemCatalog)) return;
 
                 Debug.LogError($"Slot [<color=yellow>{index}</color>] - Item '<color=magenta>{itemCatalog.data.displayName}</color>'");

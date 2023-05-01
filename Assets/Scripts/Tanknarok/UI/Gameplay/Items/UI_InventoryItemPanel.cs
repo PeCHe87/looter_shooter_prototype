@@ -36,6 +36,8 @@ namespace FusionExamples.Tanknarok.UI
 
         public void Show(Items.ItemCatalogData itemCatalog, int index)
         {
+            Debug.LogError($"InventoryItemPanel::<color=magenta>Show</color> -> Item '<color=magenta>{itemCatalog.data.displayName}</color>'");
+
             var isConsumable = itemCatalog.data.type == Items.ItemType.CONSUMABLE;
 
             _item = (isConsumable) ? (Items.ConsumableItemCatalogData) itemCatalog.data : null;
