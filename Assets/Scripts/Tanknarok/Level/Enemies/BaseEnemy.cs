@@ -24,6 +24,7 @@ namespace FusionExamples.Tanknarok.Gameplay
         [SerializeField] private GameObject _art = default;
         [SerializeField] private int _minHp = default;
         [SerializeField] private int _maxHp = default;
+        [SerializeField] Collider _collider = default;
 
         #endregion
 
@@ -247,6 +248,8 @@ namespace FusionExamples.Tanknarok.Gameplay
             StopAttacking();
 
             StopChasing();
+
+            _collider.enabled = false;
 
             _status = EnemyStatus.DEAD;
 

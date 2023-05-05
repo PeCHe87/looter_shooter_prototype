@@ -231,12 +231,25 @@ namespace FusionExamples.Tanknarok
 
         #region Reloading actions
 
+		public void StartReloadingWeapon(WeaponManager.WeaponInstallationType weaponType)
+        {
+			if (this.isReloading) return;
+
+			byte weaponIndex = weaponType == WeaponInstallationType.PRIMARY ? _activePrimaryWeapon : _activeSecondaryWeapon;
+			Weapon weapon = _weapons[weaponIndex];
+
+			// Check if weapon is full magazine
+			if (this.primaryAmmo >= weapon.InitialAmmo) return;
+
+			StartReloading(weapon);
+		}
+
 		private void StartReloading(Weapon weapon)
         {
 			this.reloadingTime = TickTimer.CreateFromSeconds(Runner, weapon.ReloadingTime);
 			this.isReloading = true;
 
-			_player.StartReloadingWeapon();
+			_player.StartReloadingWeapon(weapon.ReloadingTime, this.reloadingTime);
         }
 
 		private void StopReloading()

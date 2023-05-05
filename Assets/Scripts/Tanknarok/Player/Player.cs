@@ -1031,11 +1031,11 @@ namespace FusionExamples.Tanknarok
 			_weaponInformation.Refresh(ammo, magazine);
         }
 
-		public void StartReloadingWeapon()
+		public void StartReloadingWeapon(float reloadingTime, TickTimer cooldown)
         {
 			if (!_isLocal) return;
 
-			_weaponInformation.StartReloading();
+			_weaponInformation.StartReloading(reloadingTime, cooldown, Runner);
         }
 
 		public void StopReloadingWeapon(int ammo, int magazine)
@@ -1337,6 +1337,8 @@ namespace FusionExamples.Tanknarok
 			{
 				// Create death body loot
 				_levelManager.PlayerDeathLoot.SpawnLoot(transform.position, items);
+
+				_levelManager.EnemiesSpawnerService.SpawnEnemies(transform.position);
 			}
 
 			// Empty inventory

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Fusion;
 using FusionExamples.FusionHelpers;
+using FusionExamples.Tanknarok.Gameplay;
 using FusionExamples.Tanknarok.Items;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -25,6 +26,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private Camera _camera = default;
 		[SerializeField] private CatalogData _catalog = default;
 		[SerializeField] private PlayerDeathLoot _playerDeathLoot = default;
+		[SerializeField] private EnemiesSpawnerService _enemiesSpawnerService = default;
 		[SerializeField] private float _spawnRadius = 10;
 		[SerializeField] private UI_PlayerKillPlayerPanel _playerKillsPanel = default;
 		[SerializeField] private Material _materialBlueTeam = default;
@@ -48,6 +50,7 @@ namespace FusionExamples.Tanknarok
 		public CatalogData Catalog => _catalog;
 		public LevelBehaviour LevelBehavior => _currentLevel;
 		public PlayerDeathLoot PlayerDeathLoot => _playerDeathLoot;
+		public EnemiesSpawnerService EnemiesSpawnerService => _enemiesSpawnerService;
 		public NetworkRunner LevelRunner => Runner;
 
         #endregion

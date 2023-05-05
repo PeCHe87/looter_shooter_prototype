@@ -17,12 +17,14 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private Transform _spawnPointBlue = default;
 		[SerializeField] private Transform _spawnPointRed = default;
 		[SerializeField] private Transform _lootsContainer = default;
+		[SerializeField] private Transform _enemiesContainer = default;
 
 		private SpawnPoint[] _playerSpawnPoints;
 
 		public Transform SpawnPointBlue => _spawnPointBlue;
 		public Transform SpawnPointRed => _spawnPointRed;
 		public Transform LootsContainer => _lootsContainer;
+		public Transform EnemiesContainer => _enemiesContainer;
 
 		private void Awake()
 		{

@@ -25,11 +25,9 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
         private float _remainingTime = 0;
         private Collider[] _targets = default;
         private TargeteableBase _target = default;
-        private string _targetId = NO_TARGET_ID;
         private Vector3 _moveDirection = default;
         private bool _isLocal = false;
         private TeamEnum _playerTeam = TeamEnum.NONE;
-        private const string NO_TARGET_ID = "none";
 
         #endregion
 
@@ -253,7 +251,7 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
 
         private void StopDetection()
         {
-            if (_targetId.Equals(NO_TARGET_ID)) return;
+            if (!TargetFound) return;
 
             if (_isLocal && TargetFound)
             {
@@ -261,18 +259,17 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
             }
 
             _target = null;
-            _targetId = NO_TARGET_ID;
         }
 
         private void StartDetection(GameObject target)
         {
             var targetFound = target.GetComponentInParent<TargeteableBase>();
 
-            if (targetFound.Id.Equals(_targetId)) return;
+            if (TargetFound && _target == target) return;
 
-            if (!_targetId.Equals(NO_TARGET_ID))
+            if (TargetFound)
             {
-                if (_isLocal && TargetFound)
+                if (_isLocal)
                 {
                     _target.HideIndicator();
                 }
@@ -284,8 +281,6 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
             {
                 _target.ShowIndicator();
             }
-
-            _targetId = _target.Id;
         }
 
         #endregion

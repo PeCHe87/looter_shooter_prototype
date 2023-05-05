@@ -135,18 +135,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _interpolationDataSource: 0
-  _bulletVisualParent: {fileID: 7611710913590070502}
+  _bulletVisualParent: {fileID: 6597541038151551646}
   _explosionFX: {fileID: 6139102803200276187}
   _bulletSettings:
     hitMask:
       serializedVersion: 2
-      m_Bits: 257
+      m_Bits: 2305
     areaRadius: 0.5
     areaImpulse: 40
     areaDamage: 10
     speed: 45
     radius: 0.5
-    gravity: -30
+    gravity: 0
     timeToLive: 2
     timeToFade: 1
     ownerVelocityMultiplier: 1

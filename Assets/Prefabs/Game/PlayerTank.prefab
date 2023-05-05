@@ -1197,9 +1197,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _interpolationDataSource: 0
   _weapons:
+  - {fileID: 346593213666910495}
   - {fileID: 2623805786298927061}
   - {fileID: 3456142216153293605}
-  - {fileID: 346593213666910495}
   - {fileID: 4046957960101304630}
   - {fileID: 2178422256488403281}
   _player: {fileID: -3098922383743760179}
@@ -1464,7 +1464,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 321d55f7a949d2e4cb0f1c012f346899, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _radiusForward: 15
+  _radiusForward: 20
   _radiusDistance: 7
   _angle: 60
   _detectionDelay: 0.1

@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2406157330753153990
 Transform:
   m_ObjectHideFlags: 0
@@ -241,10 +241,10 @@ MonoBehaviour:
   _interpolationDataSource: 0
   _gunExits:
   - {fileID: 7441316144487528029}
-  _projectilePrefab: {fileID: 3844518902735432244, guid: 8cc5ecf85cbf0454b87123536b0f20d3, type: 3}
+  _projectilePrefab: {fileID: 3844518902735432244, guid: b09dc7a22744b60478bd6812be0c9957, type: 3}
   _rateOfFire: 0.3
   _ammo: 10
-  _infiniteAmmo: 0
+  _infiniteAmmo: 1
   _audioEmitter: {fileID: 0}
   _laserSight: {fileID: 0}
   _powerupType: 0
@@ -305,8 +305,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5215446328224920098}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
-  m_LocalScale: {x: 2, y: 3, z: 2}
+  m_LocalPosition: {x: 0, y: 1.75, z: 0}
+  m_LocalScale: {x: 1.2, y: 3.5, z: 1.2}
   m_Children:
   - {fileID: 2406157330753153990}
   m_Father: {fileID: 5215446329186380532}
@@ -327,7 +327,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5215446328224920098}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -339,7 +339,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 24ad6541e724a74418fa6738eee83083, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -730,6 +730,7 @@ MonoBehaviour:
   _art: {fileID: 5215446328374483506}
   _minHp: 100
   _maxHp: 200
+  _collider: {fileID: 4701082961723902123}
   __netHealth: 0
 --- !u!195 &2128597943662367100
 NavMeshAgent:
@@ -1044,7 +1045,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5215491360314148437}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 3.46, z: 0.74}
+  m_LocalPosition: {x: 0, y: 2.61, z: 0.52}
   m_LocalScale: {x: 0.3, y: 0.3, z: 2}
   m_Children: []
   m_Father: {fileID: 5215446329186380532}

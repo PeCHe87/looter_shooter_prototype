@@ -18,6 +18,7 @@ namespace FusionExamples.Tanknarok
 		public bool ToggleReady { get; set; }
 		public bool DashInput { get; set; }
 		public bool AttackInput { get; set; }
+		public bool ReloadWeaponInput { get; set; }
 
 		private Player _player;
 		private NetworkInputData _frameworkInput = new NetworkInputData();
@@ -50,6 +51,7 @@ namespace FusionExamples.Tanknarok
 
 			PlayerActionEvents.OnStartDash += StartDash;
 			PlayerActionEvents.OnStartAttack += StartAttack;
+			PlayerActionEvents.OnStartWeaponReloading += StartWeaponReloading;
 
 			Debug.Log("Spawned [" + this + "] IsClient=" + Runner.IsClient + " IsServer=" + Runner.IsServer + " HasInputAuth=" + Object.HasInputAuthority + " HasStateAuth=" + Object.HasStateAuthority);
 		}
@@ -98,6 +100,12 @@ namespace FusionExamples.Tanknarok
 					DashInput = false;
 					_frameworkInput.Buttons |= NetworkInputData.DASH;
                 }
+
+				if (ReloadWeaponInput)
+				{
+					ReloadWeaponInput = false;
+					_frameworkInput.Buttons |= NetworkInputData.RELOAD;
+				}
 			}
 
 			// Hand over the data to Fusion
@@ -113,6 +121,7 @@ namespace FusionExamples.Tanknarok
 		{
 			PlayerActionEvents.OnStartDash -= StartDash;
 			PlayerActionEvents.OnStartAttack -= StartAttack;
+			PlayerActionEvents.OnStartWeaponReloading -= StartWeaponReloading;
 		}
 
 		private void StartDash()
@@ -124,6 +133,11 @@ namespace FusionExamples.Tanknarok
 		{
 			AttackInput = true;
 		}
+
+		private void StartWeaponReloading()
+        {
+			ReloadWeaponInput = true;
+        }
 
 		private void Update()
 		{
@@ -258,6 +272,12 @@ namespace FusionExamples.Tanknarok
 					_player.StartDash();
                 }
 
+				// Process Reload input
+				if (input.IsDown(NetworkInputData.RELOAD))
+                {
+					_player.shooter.StartReloadingWeapon(WeaponManager.WeaponInstallationType.PRIMARY);
+				}
+
 				// We let the NetworkCharacterController do the actual work
 				_player.SetDirections(direction, input.aimDirection.normalized);
 			}
@@ -293,6 +313,7 @@ namespace FusionExamples.Tanknarok
 		public const uint BUTTON_FIRE_SECONDARY = 1 << 1;
 		public const uint READY = 1 << 6;
 		public const uint DASH = 1 << 7;
+		public const uint RELOAD = 1 << 8;
 
 		public uint Buttons;
 		public Vector2 aimDirection;

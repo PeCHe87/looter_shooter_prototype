@@ -266,6 +266,7 @@ namespace FusionExamples.Tanknarok
 			var inputauth = Object.InputAuthority;
 			var hbm = Runner.LagCompensation;
 			int cnt = hbm.OverlapSphere(hitPoint, _bulletSettings.areaRadius, inputauth, _areaHits, _bulletSettings.hitMask, HitOptions.IncludePhysX);
+
 			if (cnt > 0)
 			{
 				for (int i = 0; i < cnt; i++)
