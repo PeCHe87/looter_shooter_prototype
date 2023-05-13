@@ -1186,8 +1186,15 @@ namespace FusionExamples.Tanknarok
 
 			_lootbox.Take(id);
 
+			var itemIsStackable = false;
+			
+			if (_levelManager.Catalog.TryGetItem(id, out var itemCatalog))
+            {
+				itemIsStackable = !itemCatalog.IsEquipable();
+            }
+
 			// Player's inventory should be updated
-			AddItemToInventory(id, amount);
+			AddItemToInventory(id, amount, itemIsStackable);
 		}
 
 		#endregion
@@ -1207,7 +1214,8 @@ namespace FusionExamples.Tanknarok
 			{
 				id = -1,
 				amount = 0,
-				locked = true
+				locked = true,
+				isStackable = false
 			};
 
             for (int i = 5; i < _inventoryData.items.Length; i++)
@@ -1228,7 +1236,7 @@ namespace FusionExamples.Tanknarok
 			_inventoryPanel?.Teardown();
         }
 
-		private void AddItemToInventory(int id, int amount)
+		private void AddItemToInventory(int id, int amount, bool itemIsStackable)
         {
 			var itemAlreadyExit = _inventoryData.AlreadyExist(id, out var slotIndex);
 
@@ -1255,7 +1263,8 @@ namespace FusionExamples.Tanknarok
 			var item = new PlayerInventoryItemData()
 			{
 				id = id,
-				amount = amount
+				amount = amount,
+				isStackable = itemIsStackable
 			};
 
 			_inventoryData.items.Set(slotIndex, item);
@@ -1271,6 +1280,29 @@ namespace FusionExamples.Tanknarok
 		public void ConsumeInventorySlot(int slotIndex)
         {
 			RPC_ConsumeItem(this.playerID, slotIndex);
+		}
+
+		public void EquipInventorySlot(int slotIndex)
+        {
+			Debug.LogError($"Player <color=yellow>{this.playerID}</color> equips slot <color=orange>{slotIndex}</color>");
+
+			/*
+			var item = _inventoryData.items.Get(slotIndex);
+
+			var itemId = item.id;
+
+			_levelManager.Catalog.TryGetItem(itemId, out var itemCatalog);
+
+			var weaponData = ((EquipableItemCatalogData)itemCatalog.data).WeaponData;
+
+			var weapon = _levelManager.Runner.Spawn(weaponData.Prefab);
+			weapon.gameObject.name = $"weapon_{itemCatalog.data.displayName}";
+			weapon.OverrideConfiguration(itemId, weaponData);
+
+			RPC_EquipItem(this.playerID, slotIndex, weapon);
+			*/
+
+			RPC_EquipItem(this.playerID, slotIndex);
 		}
 
 		private void SpawnDeathLoot()
@@ -1305,7 +1337,7 @@ namespace FusionExamples.Tanknarok
 
 			if (!_isLocal) return;
 
-			Debug.LogError($"Player::<color=magenta>ConsumeInventorySlot</color> -> item: <color=yellow>{item.id}</color> from slot: <color=yellow>{slotIndex}</color>");
+			Debug.LogError($"Player::<color=magenta>ConsumeItem</color> -> item: <color=yellow>{item.id}</color> from slot: <color=yellow>{slotIndex}</color>");
 
 			_inventoryPanel.Refresh(_inventoryData);
 		}
@@ -1348,6 +1380,46 @@ namespace FusionExamples.Tanknarok
 
 			// Update inventory panel
 			_inventoryPanel.Refresh(_inventoryData);
+		}
+
+		[Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+		public void RPC_EquipItem(int playerId, int slotIndex, RpcInfo info = default)
+		{
+			if (playerId != this.playerID) return;
+
+			var item = _inventoryData.items.Get(slotIndex);
+
+			var itemId = item.id;
+
+			_levelManager.Catalog.TryGetItem(itemId, out var itemCatalog);
+
+			// Equip weapon
+			weaponManager.Equip(itemId, (EquipableItemCatalogData)itemCatalog.data, out var previousWeaponId);
+
+			// Move equipped weapon to the already used inventory slot
+			if (previousWeaponId == -1)
+            {
+				item.amount = 0;
+				item.id = 0;
+			}
+            else
+            {
+				item.amount = 1;
+				item.id = previousWeaponId;
+			}
+
+			_inventoryData.items.Set(slotIndex, item);
+
+			if (!_isLocal) return;
+
+			Debug.LogError($"Player::<color=magenta>EquipItem</color> -> item: <color=yellow>{itemId}</color> from slot: <color=yellow>{slotIndex}</color>");
+
+			_inventoryPanel.Refresh(_inventoryData);
+
+			// Refresh player information panel with new equipped weapon
+			
+
+			_playerInfoPanel.RefreshWeapon(itemCatalog.data.icon);
 		}
 
 		#endregion

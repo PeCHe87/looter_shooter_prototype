@@ -11,11 +11,18 @@ namespace FusionExamples.Tanknarok
 			SECONDARY,
 			BUFF
 		};
-		
-		[SerializeField] private Weapon[] _weapons;
-		[SerializeField] private Player _player;
 
-		[Networked]
+        #region Inspector
+
+        [SerializeField] private Weapon[] _weapons;
+		[SerializeField] private Player _player;
+		[SerializeField] private Transform _primaryWeaponsContainer = default;
+
+        #endregion
+
+        #region Networked properties
+
+        [Networked]
 		public byte selectedPrimaryWeapon { get; set; }
 
 		[Networked]
@@ -36,10 +43,18 @@ namespace FusionExamples.Tanknarok
 		[Networked] public NetworkBool isReloading { get; set; }
 		[Networked] public TickTimer reloadingTime { get; set; }
 
-		private byte _activePrimaryWeapon;
+        #endregion
+
+        #region Private properties
+
+        private byte _activePrimaryWeapon;
 		private byte _activeSecondaryWeapon;
 
-		public override void Render()
+        #endregion
+
+        #region Networked methods
+
+        public override void Render()
 		{
 			ShowAndHideWeapons();
 		}
@@ -65,25 +80,10 @@ namespace FusionExamples.Tanknarok
 			}
         }
 
-        private void ShowAndHideWeapons()
-		{
-			// Animates the scale of the weapon based on its active status
-			for (int i = 0; i < _weapons.Length; i++)
-			{
-				_weapons[i].Show(i == selectedPrimaryWeapon || i == selectedSecondaryWeapon);
-			}
+        #endregion
 
-			// Whenever the weapon visual is fully visible, set the weapon to be active - prevents shooting when changing weapon
-			SetWeaponActive(selectedPrimaryWeapon, ref _activePrimaryWeapon);
-			SetWeaponActive(selectedSecondaryWeapon, ref _activeSecondaryWeapon);
-		}
-
-		void SetWeaponActive(byte selectedWeapon, ref byte _activeWeapon)
-		{
-			if (_weapons[selectedWeapon].isShowing)
-				_activeWeapon = selectedWeapon;
-		}
-
+        #region Public methods
+		
 		/// <summary>
 		/// Activate a new weapon when picked up
 		/// </summary>
@@ -167,6 +167,41 @@ namespace FusionExamples.Tanknarok
                 }
 			}
 		}
+		
+		public void ResetAllWeapons()
+		{
+			ResetWeapon(WeaponInstallationType.PRIMARY);
+			ResetWeapon(WeaponInstallationType.SECONDARY);
+		}
+
+		public void InstallWeapon(PowerupElement powerup)
+		{
+			int weaponIndex = GetWeaponIndex(powerup.powerupType);
+			ActivateWeapon(powerup.weaponInstallationType, weaponIndex);
+		}
+
+        #endregion
+
+        #region Private methods
+
+        private void ShowAndHideWeapons()
+		{
+			// Animates the scale of the weapon based on its active status
+			for (int i = 0; i < _weapons.Length; i++)
+			{
+				_weapons[i].Show(i == selectedPrimaryWeapon || i == selectedSecondaryWeapon);
+			}
+
+			// Whenever the weapon visual is fully visible, set the weapon to be active - prevents shooting when changing weapon
+			SetWeaponActive(selectedPrimaryWeapon, ref _activePrimaryWeapon);
+			SetWeaponActive(selectedSecondaryWeapon, ref _activeSecondaryWeapon);
+		}
+
+		private void SetWeaponActive(byte selectedWeapon, ref byte _activeWeapon)
+		{
+			if (_weapons[selectedWeapon].isShowing)
+				_activeWeapon = selectedWeapon;
+		}
 
 		private Vector3 GetAimingDirection()
         {
@@ -193,12 +228,6 @@ namespace FusionExamples.Tanknarok
 			return true;
 		}
 
-		public void ResetAllWeapons()
-		{
-			ResetWeapon(WeaponInstallationType.PRIMARY);
-			ResetWeapon(WeaponInstallationType.SECONDARY);
-		}
-
 		void ResetWeapon(WeaponInstallationType weaponType)
 		{
 			if (weaponType == WeaponInstallationType.PRIMARY)
@@ -209,12 +238,6 @@ namespace FusionExamples.Tanknarok
 			{
 				ActivateWeapon(weaponType, 4);
 			}
-		}
-
-		public void InstallWeapon(PowerupElement powerup)
-		{
-			int weaponIndex = GetWeaponIndex(powerup.powerupType);
-			ActivateWeapon(powerup.weaponInstallationType, weaponIndex);
 		}
 
 		private int GetWeaponIndex(PowerupType powerupType)
@@ -229,9 +252,11 @@ namespace FusionExamples.Tanknarok
 			return 0;
 		}
 
+        #endregion
+
         #region Reloading actions
 
-		public void StartReloadingWeapon(WeaponManager.WeaponInstallationType weaponType)
+        public void StartReloadingWeapon(WeaponManager.WeaponInstallationType weaponType)
         {
 			if (this.isReloading) return;
 
@@ -261,6 +286,31 @@ namespace FusionExamples.Tanknarok
 			this.isReloading = false;
 
 			_player.StopReloadingWeapon(this.primaryAmmo, weapon.InitialAmmo);
+        }
+
+        #endregion
+
+        #region Equip
+
+		public void Equip(int itemId, Items.EquipableItemCatalogData itemCatalogData, out int previousWeaponId)
+        {
+			previousWeaponId = -1;
+
+			// Remove previous weapon
+			if (_weapons[0] != null)
+			{
+				var oldWeapon = _weapons[0];
+
+				previousWeaponId = oldWeapon.ItemId;
+			}
+
+			var weapon = _weapons[0];
+
+			weapon.OverrideConfiguration(itemId, itemCatalogData);
+
+			primaryAmmo = 0;
+
+			StartReloading(weapon);
         }
 
         #endregion

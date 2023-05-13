@@ -87,8 +87,15 @@ namespace FusionExamples.Tanknarok.UI
             _empty.Toggle(false);
             _lock.Toggle(false);
 
-            _stack.Toggle(item.amount > 0);
-            _stackAmount.text = $"{item.amount}";
+            if (item.isStackable)
+            {
+                _stack.Toggle(item.amount > 0);
+                _stackAmount.text = $"{item.amount}";
+            }
+            else
+            {
+                _stack.Toggle(false);
+            }
 
             Sprite icon = null;
 

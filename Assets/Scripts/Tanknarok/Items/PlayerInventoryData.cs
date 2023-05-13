@@ -69,7 +69,8 @@ namespace FusionExamples.Tanknarok.Items
             var emptyItem = new PlayerInventoryItemData()
             {
                 id = 0,
-                amount = 0
+                amount = 0,
+                isStackable = false
             };
 
             for (int i = 0; i < items.Length; i++)

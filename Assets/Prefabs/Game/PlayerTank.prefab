@@ -1203,6 +1203,7 @@ MonoBehaviour:
   - {fileID: 4046957960101304630}
   - {fileID: 2178422256488403281}
   _player: {fileID: -3098922383743760179}
+  _primaryWeaponsContainer: {fileID: 1613857995846965701}
   _selectedPrimaryWeapon: 0
   _selectedSecondaryWeapon: 0
   _primaryAmmo: 0

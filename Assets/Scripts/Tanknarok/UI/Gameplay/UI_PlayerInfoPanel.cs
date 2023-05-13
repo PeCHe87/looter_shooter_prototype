@@ -22,6 +22,9 @@ namespace FusionExamples.Tanknarok.UI
         [SerializeField] private Sprite _chargerHalf = default;
         [SerializeField] private Sprite _chargerFull = default;
 
+        [Header("Weapon info")]
+        [SerializeField] private Image _weaponIcon = default;
+
         #endregion
 
         #region Unity events
@@ -56,6 +59,11 @@ namespace FusionExamples.Tanknarok.UI
             Debug.LogError($"UpdateEnergy -> progress <color=yellow>{progress}</color>, origin: <color=cyan>{origin}</color>");
 
             RefreshCollectableProgress(progress);
+        }
+
+        public void RefreshWeapon(Sprite icon)
+        {
+            _weaponIcon.sprite = icon;
         }
 
         #endregion

@@ -12,6 +12,7 @@ namespace FusionExamples.Tanknarok.Items
         public int id;
         public int amount;
         public bool locked;
+        public bool isStackable;
 
         public bool IsEmpty()
         {

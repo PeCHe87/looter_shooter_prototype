@@ -12,6 +12,7 @@ namespace FusionExamples.Tanknarok
 
 	public class Weapon : NetworkBehaviour
 	{
+		[SerializeField] private int _itemId = -1;
 		[SerializeField] private Transform[] _gunExits;
 		[SerializeField] private Projectile _projectilePrefab; // Networked projectile
 		[SerializeField] private float _rateOfFire;
@@ -38,6 +39,7 @@ namespace FusionExamples.Tanknarok
 		public bool infiniteAmmo => _infiniteAmmo;
 		public float ReloadingTime => _reloadingTime;
 		public byte InitialAmmo => _initialAmmo;
+		public int ItemId => _itemId;
 
 		public PowerupType powerupType => _powerupType;
 
@@ -51,6 +53,8 @@ namespace FusionExamples.Tanknarok
 					_muzzleFlashList.Add(Instantiate(_muzzleFlashPrefab, gunExit.position, gunExit.rotation, transform));
 				}
 			}
+
+			_laserSight?.Deactivate();
 		}
 
 		/// <summary>
@@ -82,6 +86,7 @@ namespace FusionExamples.Tanknarok
 		{
 			_active = value;
 
+			/*
 			if (_laserSight != null)
 			{
 				if (_active)
@@ -92,6 +97,7 @@ namespace FusionExamples.Tanknarok
 				else
 					_laserSight.Deactivate();
 			}
+			*/
 		}
 
 		/// <summary>
@@ -128,8 +134,8 @@ namespace FusionExamples.Tanknarok
 		private void FireFx()
 		{
 			// Recharge the laser sight if this weapon has it
-			if (_laserSight != null)
-				_laserSight.Recharge();
+			//if (_laserSight != null)
+			//	_laserSight.Recharge();
 
 			if(_gunExit<_muzzleFlashList.Count)
 				_muzzleFlashList[_gunExit].Play();
@@ -173,6 +179,35 @@ namespace FusionExamples.Tanknarok
 
 			Transform exit = _gunExits[_gunExit];
 			return exit;
+		}
+
+		public void OverrideConfiguration(int id, Items.EquipableItemCatalogData data)
+        {
+			if (data.WeaponData.Type == Items.ItemWeaponType.ASSAULT)
+			{
+				var assaultData = (Items.ItemWeaponAssaultData)data.WeaponData;
+
+				_itemId = id;
+				_projectilePrefab = assaultData.ProjectilePrefab;
+				_rateOfFire = assaultData.RateOfFire;
+				_initialAmmo = assaultData.InitialAmmo;
+				_ammo = assaultData.Ammo;
+				_infiniteAmmo = assaultData.InfiniteAmmo;
+				_powerupType = assaultData.PowerupType;
+				_reloadingTime = assaultData.reloadingTime;
+				_muzzleFlashPrefab = assaultData.MuzzleFlashPrefab;
+
+				_muzzleFlashList.Clear();
+
+				foreach (Transform gunExit in _gunExits)
+				{
+					_muzzleFlashList.Add(Instantiate(_muzzleFlashPrefab, gunExit.position, gunExit.rotation, transform));
+				}
+			}
+            else if (data.WeaponData.Type == Items.ItemWeaponType.ASSAULT)
+			{
+				// TODO: configure melee weapon values
+            }
 		}
 	}
 }
