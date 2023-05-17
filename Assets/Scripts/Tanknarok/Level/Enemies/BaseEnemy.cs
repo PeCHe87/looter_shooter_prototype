@@ -227,13 +227,13 @@ namespace FusionExamples.Tanknarok.Gameplay
 
         [Networked] public byte _netHealth { get; set; }
 
-        public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef source, Player projectileOwner)
+        public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef source, Player attacker)
         {
             if (_status == EnemyStatus.DEAD) return;
 
             _netHealth = (byte)Mathf.Clamp(_netHealth - damage, 0, _maxHp);
 
-            //Debug.LogError($"BaseEnemy::ApplyDamage -> hp: <color=yellow>{_netHealth}</color>, damage: <color=cyan>{damage}</color>, is dead: <color=yellow>{_netHealth == 0}</color>");
+            Debug.LogError($"BaseEnemy::ApplyDamage -> hp: <color=yellow>{_netHealth}/{_maxHp}</color>, damage: <color=cyan>{damage}</color>, is dead: <color=yellow>{_netHealth == 0}</color>, attacker: <color=orange>{attacker.displayName}</color>");
 
             if (_netHealth == 0)
             {

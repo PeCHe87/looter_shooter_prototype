@@ -251,7 +251,8 @@ namespace FusionExamples.Tanknarok
 				// Process primary weapon fire
 				if (input.IsDown(NetworkInputData.BUTTON_FIRE_SECONDARY))
 				{
-					_player.shooter.FireWeapon(WeaponManager.WeaponInstallationType.PRIMARY);
+					_player.UseWeapon();
+					//_player.shooter.FireWeapon(WeaponManager.WeaponInstallationType.PRIMARY);
 				}
 
 				// Process secondary weapon fire

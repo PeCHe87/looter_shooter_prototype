@@ -209,7 +209,7 @@ namespace FusionExamples.Tanknarok
 
 				_weaponInformation.Init();
 
-				shooter.ResetAllWeapons();
+				weaponManager.ResetAllWeapons();
 
 				_dashInfo = FindObjectOfType<UI_PlayerDashInfo>();
 
@@ -541,7 +541,7 @@ namespace FusionExamples.Tanknarok
 		private void ResetPlayer()
 		{
 			Debug.Log($"Resetting player {playerID}, tick={Runner.Simulation.Tick}, timer={respawnTimer.IsRunning}:{respawnTimer.TargetTick}, life={life}, lives={lives}, hasAuthority={Object.HasStateAuthority} to state={state}");
-			shooter.ResetAllWeapons();
+			weaponManager.ResetAllWeapons();
 			state = State.Active;
 		}
 
@@ -579,7 +579,7 @@ namespace FusionExamples.Tanknarok
 			if (powerup.powerupType == PowerupType.HEALTH)
 				life = MAX_HEALTH;
 			else
-				shooter.InstallWeapon(powerup);
+				weaponManager.InstallWeapon(powerup);
 		}
 
 		private void CheckForPowerupPickup()
@@ -1045,6 +1045,27 @@ namespace FusionExamples.Tanknarok
 			_weaponInformation.StopReloading(ammo, magazine);
 		}
 
+		public void UseWeapon()
+		{
+			var weaponType = weaponManager.GetWeaponType();
+
+			if (weaponType == ItemWeaponType.NONE)
+			{
+				return;
+			}
+
+			if (weaponType == ItemWeaponType.ASSAULT)
+			{
+				weaponManager.FireWeapon(WeaponManager.WeaponInstallationType.PRIMARY);
+				return;
+			}
+
+			if (weaponType == ItemWeaponType.MELEE)
+			{
+				weaponManager.MeleeAttack();
+			}
+		}
+
 		#endregion
 
 		#region Minimap indicator
@@ -1285,22 +1306,6 @@ namespace FusionExamples.Tanknarok
 		public void EquipInventorySlot(int slotIndex)
         {
 			Debug.LogError($"Player <color=yellow>{this.playerID}</color> equips slot <color=orange>{slotIndex}</color>");
-
-			/*
-			var item = _inventoryData.items.Get(slotIndex);
-
-			var itemId = item.id;
-
-			_levelManager.Catalog.TryGetItem(itemId, out var itemCatalog);
-
-			var weaponData = ((EquipableItemCatalogData)itemCatalog.data).WeaponData;
-
-			var weapon = _levelManager.Runner.Spawn(weaponData.Prefab);
-			weapon.gameObject.name = $"weapon_{itemCatalog.data.displayName}";
-			weapon.OverrideConfiguration(itemId, weaponData);
-
-			RPC_EquipItem(this.playerID, slotIndex, weapon);
-			*/
 
 			RPC_EquipItem(this.playerID, slotIndex);
 		}

@@ -180,11 +180,31 @@ namespace FusionExamples.Tanknarok
 			ActivateWeapon(powerup.weaponInstallationType, weaponIndex);
 		}
 
-        #endregion
+		public Items.ItemWeaponType GetWeaponType()
+		{
+			if (_activePrimaryWeapon < 0 || _activePrimaryWeapon >= _weapons.Length) return Items.ItemWeaponType.NONE;
 
-        #region Private methods
+			return _weapons[_activePrimaryWeapon].WeaponType;
+		}
 
-        private void ShowAndHideWeapons()
+		public void MeleeAttack()
+        {
+			Debug.LogError("<color=magenta>WeaponManager</color>::MeleeAttack");
+
+			byte weaponIndex =_activePrimaryWeapon;
+			
+			Weapon weapon = _weapons[weaponIndex];
+
+			var aimDirection = GetAimingDirection();
+
+			weapon.MeleeAttack(Runner, Object.InputAuthority, aimDirection, _player);
+		}
+
+		#endregion
+
+		#region Private methods
+
+		private void ShowAndHideWeapons()
 		{
 			// Animates the scale of the weapon based on its active status
 			for (int i = 0; i < _weapons.Length; i++)
@@ -307,6 +327,8 @@ namespace FusionExamples.Tanknarok
 			var weapon = _weapons[0];
 
 			weapon.OverrideConfiguration(itemId, itemCatalogData);
+
+			if (weapon.WeaponType != Items.ItemWeaponType.ASSAULT) return;
 
 			primaryAmmo = 0;
 
