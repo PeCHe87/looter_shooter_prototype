@@ -9,16 +9,6 @@ namespace FusionExamples.Tanknarok.Items
 		public string ItemCatalogId;
         public string DisplayName;
         public ItemWeaponType Type;
-		/*
-		public Weapon Prefab;
-		public Projectile ProjectilePrefab;
-		public ParticleSystem MuzzleFlashPrefab;
-		public float RateOfFire;
-		public byte InitialAmmo;
-		public byte Ammo;
-		public bool InfiniteAmmo;
-		public PowerupType PowerupType = PowerupType.DEFAULT;
-		public float reloadingTime = 2;
-		*/
+		public GameObject Visual;
 	}
 }

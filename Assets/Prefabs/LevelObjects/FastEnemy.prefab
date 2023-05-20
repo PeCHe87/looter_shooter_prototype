@@ -183,6 +183,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93f13577b07071a419d5b103257307a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _interpolationDataSource: 0
   _destroyedParticlePrefab: {fileID: 198616896704594468, guid: fb7f4cd27fdee94488da2453eb50811b, type: 3}
   _visual: {fileID: 5510480541950640353}
   _trigger: {fileID: 980619022667023781}
@@ -192,6 +193,8 @@ MonoBehaviour:
     m_Bits: 1280
   _enabled: 1
   _audioEmitter: {fileID: 0}
+  _maxHp: 0
+  __netHealth: 0
 --- !u!54 &1951463353001628970
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -346,6 +349,7 @@ MonoBehaviour:
   _art: {fileID: 344170265491445564}
   _minHp: 0
   _maxHp: 0
+  _collider: {fileID: 0}
   __netHealth: 0
 --- !u!195 &5849064621866065010
 NavMeshAgent:
@@ -478,6 +482,7 @@ MonoBehaviour:
     RawGuidValue: 6c69c20ff964d094181c1a848c68b431
   NestedObjects: []
   NetworkedBehaviours:
+  - {fileID: 4153779445928652527}
   - {fileID: 8713027782174077491}
   - {fileID: 1968467902315012392}
   - {fileID: 8750830884749510311}

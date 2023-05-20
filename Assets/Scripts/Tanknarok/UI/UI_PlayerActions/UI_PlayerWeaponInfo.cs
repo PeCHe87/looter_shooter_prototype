@@ -4,69 +4,123 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UI_PlayerWeaponInfo : MonoBehaviour
+namespace FusionExamples.Tanknarok.UI
 {
-    [SerializeField] private Image _progressBar = default;
-    [SerializeField] private Image _reloadingBar = default;
-    [SerializeField] private TextMeshProUGUI _txtAmmo = default;
-    [SerializeField] private TextMeshProUGUI _txtReloading = default;
-
-    private bool _isReloading = false;
-    private NetworkRunner _runner = default;
-    private TickTimer _cooldown = default;
-    private float _delayTime = default;
-
-    public void Init()
+    public class UI_PlayerWeaponInfo : MonoBehaviour
     {
-        _txtReloading.enabled = false;
-    }
+        #region Inspector
 
-    public void Refresh(int ammo, int magazine)
-    {
-        var progress = (float)ammo / magazine;
+        [SerializeField] private Image _icon = default;
+        [SerializeField] private Image _progressBar = default;
+        [SerializeField] private Image _reloadingBar = default;
+        [SerializeField] private TextMeshProUGUI _txtAmmo = default;
+        [SerializeField] private TextMeshProUGUI _txtReloading = default;
+        [SerializeField] private Sprite _iconAssault = default;
+        [SerializeField] private Sprite _iconMelee = default;
 
-        _progressBar.fillAmount = progress;
+        #endregion
 
-        _txtAmmo.text = $"<color=#F8AC08>{ammo}</color>/<size=20>{magazine}</size>";
-    }
+        #region Private properties
 
-    public void StartReloading(float delay, TickTimer cooldown, NetworkRunner runner)
-    {
-        _runner = runner;
-        _cooldown = cooldown;
-        _delayTime = delay;
+        private bool _isReloading = false;
+        private NetworkRunner _runner = default;
+        private TickTimer _cooldown = default;
+        private float _delayTime = default;
 
-        _isReloading = true;
+        #endregion
 
-        _progressBar.fillAmount = 0;
+        #region Public methods
 
-        _txtAmmo.enabled = false;
-        _txtReloading.enabled = true;
+        public void Init()
+        {
+            _txtReloading.enabled = false;
+        }
 
-        _reloadingBar.fillAmount = 0;
-        _reloadingBar.enabled = true;
-    }
+        public void Refresh(int ammo, int magazine)
+        {
+            var progress = (float)ammo / magazine;
 
-    public void StopReloading(int ammo, int magazine)
-    {
-        _txtAmmo.enabled = true;
-        _txtReloading.enabled = false;
+            _progressBar.fillAmount = progress;
 
-        _reloadingBar.enabled = false;
+            _txtAmmo.text = $"<color=#F8AC08>{ammo}</color>/<size=20>{magazine}</size>";
+        }
 
-        Refresh(ammo, magazine);
-    }
+        public void StartReloading(float delay, TickTimer cooldown, NetworkRunner runner)
+        {
+            _runner = runner;
+            _cooldown = cooldown;
+            _delayTime = delay;
 
-    private void Update()
-    {
-        if (!_isReloading) return;
+            _isReloading = true;
 
-        var remaining = _cooldown.RemainingTime(_runner);
+            _progressBar.fillAmount = 0;
 
-        var progress = (remaining / _delayTime);
+            _txtAmmo.enabled = false;
+            _txtReloading.enabled = true;
 
-        var fillAmount = 1 - progress;
+            _reloadingBar.fillAmount = 0;
+            _reloadingBar.enabled = true;
+        }
 
-        _reloadingBar.fillAmount = fillAmount ?? 0;
+        public void StopReloading(int ammo, int magazine)
+        {
+            _txtAmmo.enabled = true;
+            _txtReloading.enabled = false;
+
+            _reloadingBar.enabled = false;
+
+            Refresh(ammo, magazine);
+        }
+
+        public void RefreshWeaponType(Items.ItemWeaponType weaponType)
+        {
+            switch (weaponType)
+            {
+                case Items.ItemWeaponType.ASSAULT:
+                    SetupAssault();
+                    break;
+
+                case Items.ItemWeaponType.MELEE:
+                    SetupMelee();
+                    break;
+            }
+        }
+
+        #endregion
+
+        #region Private methods
+
+        private void Update()
+        {
+            if (!_isReloading) return;
+
+            var remaining = _cooldown.RemainingTime(_runner);
+
+            var progress = (remaining / _delayTime);
+
+            var fillAmount = 1 - progress;
+
+            _reloadingBar.fillAmount = fillAmount ?? 0;
+        }
+
+        private void SetupAssault()
+        {
+            _icon.sprite = _iconAssault;
+
+            _txtAmmo.enabled = true;
+
+            _progressBar.enabled = true;
+        }
+
+        private void SetupMelee()
+        {
+            _icon.sprite = _iconMelee;
+
+            _txtAmmo.enabled = false;
+
+            _progressBar.enabled = false;
+        }
+
+        #endregion
     }
 }

@@ -16,7 +16,7 @@ namespace FusionExamples.Tanknarok
 
         [SerializeField] private Weapon[] _weapons;
 		[SerializeField] private Player _player;
-		[SerializeField] private Transform _primaryWeaponsContainer = default;
+		[SerializeField] private Transform _pivot = default;
 
         #endregion
 
@@ -272,11 +272,29 @@ namespace FusionExamples.Tanknarok
 			return 0;
 		}
 
-        #endregion
+		private void RefreshVisualWeapon(string displayName, GameObject visualRepresentation)
+        {
+			Debug.LogError($"Refresh visual weapon for <color=yellow>{visualRepresentation.name}</color>");
 
-        #region Reloading actions
+			if (_pivot.childCount > 0)
+            {
+				var previousWeapon = _pivot.GetChild(0);
 
-        public void StartReloadingWeapon(WeaponManager.WeaponInstallationType weaponType)
+				Destroy(previousWeapon.gameObject);
+            }
+
+			var newWeapon = Instantiate(visualRepresentation, Vector3.zero, Quaternion.identity, _pivot);
+			newWeapon.transform.localPosition = Vector3.zero;
+			newWeapon.transform.localRotation = Quaternion.identity;
+
+			newWeapon.name = $"visualWeapon_{displayName}";
+        }
+
+		#endregion
+
+		#region Reloading actions
+
+		public void StartReloadingWeapon(WeaponManager.WeaponInstallationType weaponType)
         {
 			if (this.isReloading) return;
 
@@ -328,6 +346,8 @@ namespace FusionExamples.Tanknarok
 
 			weapon.OverrideConfiguration(itemId, itemCatalogData);
 
+			RefreshVisualWeapon(itemCatalogData.displayName, itemCatalogData.WeaponData.Visual);
+			
 			if (weapon.WeaponType != Items.ItemWeaponType.ASSAULT) return;
 
 			primaryAmmo = 0;

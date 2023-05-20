@@ -1421,9 +1421,10 @@ namespace FusionExamples.Tanknarok
 
 			_inventoryPanel.Refresh(_inventoryData);
 
-			// Refresh player information panel with new equipped weapon
-			
+			// Refresh weapon information based on weapon type
+			_weaponInformation.RefreshWeaponType(((EquipableItemCatalogData)itemCatalog.data).WeaponData.Type);
 
+			// Refresh player information panel with new equipped weapon
 			_playerInfoPanel.RefreshWeapon(itemCatalog.data.icon);
 		}
 
