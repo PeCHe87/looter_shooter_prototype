@@ -29,6 +29,8 @@ namespace FusionExamples.Tanknarok.Gameplay
         private ParticleSystem _destroyedParticle;
 		private GameObject _debris;
 		private bool _isDestroyed = false;
+		private Hitbox _hitBox = default;
+		private HitboxRoot _hitBoxRoot = default;
 
         #endregion
 
@@ -76,6 +78,18 @@ namespace FusionExamples.Tanknarok.Gameplay
 			if (_debrisPrefab != null)
 				_debris = Instantiate(_debrisPrefab, transform.parent);
 
+			// Disable hit box
+			if (TryGetComponent(out _hitBox))
+			{
+				Destroy(_hitBox);
+			}
+
+			// Disable hit box root
+			if (TryGetComponent(out _hitBoxRoot))
+			{
+				Destroy(_hitBoxRoot);
+			}
+
 			OnDestroyed?.Invoke();
 		}
 
@@ -98,19 +112,41 @@ namespace FusionExamples.Tanknarok.Gameplay
 		[SerializeField] private int _maxHp = default;
 
 		[Networked(OnChanged = nameof(OnHealthChanged))] public byte _netHealth { get; set; }
+		//[Networked] private ParticleSystem _netHitVfx { get; set; }
 
-		public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef source, Player attacker)
+		public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef source, Player attacker, GameObject hitVfx = null)
 		{
 			if (_isDestroyed) return;
+
+			//_netHitVfx = hitVfx;
 
 			_netHealth = (byte)Mathf.Clamp(_netHealth - damage, 0, _maxHp);
 
 			Debug.LogError($"Destructible::ApplyDamage -> hp: <color=yellow>{_netHealth}/{_maxHp}</color>, damage: <color=cyan>{damage}</color>, is dead: <color=yellow>{_netHealth == 0}</color>, attacker: <color=orange>{attacker.displayName}</color>");
 
+			ShowHitVfx_Local(hitVfx);
+
 			if (_netHealth > 0) return;
 
 			Death_Local();
 		}
+
+		private void ShowHitVfx_Local(GameObject prefabVfx)
+        {
+			if (prefabVfx == null) return;
+
+			var vfx = Instantiate(prefabVfx, transform);
+
+			vfx.transform.position = transform.position;
+			vfx.transform.localRotation = Quaternion.identity;
+			vfx.transform.localScale = Vector3.one * 2;
+
+			if (!vfx.TryGetComponent<ParticleSystem>(out var particle)) return;
+
+			particle.Play();
+
+			Destroy(vfx, 2);
+        }
 
 		private void Death_Local()
         {
@@ -119,6 +155,22 @@ namespace FusionExamples.Tanknarok.Gameplay
 			_trigger.enabled = false;
 
 			DestroyObject();
+		}
+
+		private void ShowHitVfx_Remote()
+		{
+			/*
+			if (HasStateAuthority) return;
+
+			if (_netHitVfx == null) return;
+
+			var vfx = Instantiate(_netHitVfx);
+
+			vfx.transform.position = transform.position;
+			vfx.transform.localRotation = Quaternion.identity;
+
+			vfx.Play();
+			*/
 		}
 
 		private void Death_Remote()
@@ -137,6 +189,8 @@ namespace FusionExamples.Tanknarok.Gameplay
 			if (!changed.Behaviour) return;
 
 			var health = changed.Behaviour._netHealth;
+
+			changed.Behaviour.ShowHitVfx_Remote();
 
 			if (health > 0) return;
 

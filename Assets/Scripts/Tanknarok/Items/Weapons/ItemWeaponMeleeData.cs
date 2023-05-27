@@ -10,5 +10,6 @@ namespace FusionExamples.Tanknarok.Items
         public int Damage;
         public LayerMask HitMask;
         public float Impulse;
+        public GameObject HitVfx;
     }
 }

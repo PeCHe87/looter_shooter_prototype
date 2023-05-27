@@ -33,6 +33,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private float _meleeAttackAngle = default;
 		[SerializeField] private float _meleeAreaImpulse = default;
 		[SerializeField] private byte _meleeDamage = default;
+		[SerializeField] private GameObject _meleeHitVfx = default;
 		[SerializeField] private bool _canDebugMelee = false;
 		[SerializeField] private bool _drawMelee = false;
 
@@ -265,12 +266,20 @@ namespace FusionExamples.Tanknarok
 				_meleeAreaImpulse = meleeData.Impulse;
 				_meleeDamage = (byte) meleeData.Damage;
 				_meleeAttackAngle = meleeData.Angle;
+				_meleeHitVfx = meleeData.HitVfx;
 			}
 		}
 
 		private void ApplyMeleeDamage()
         {
             Debug.LogError("<color=magenta>Weapon</color>::ApplyMeleeDamage");
+
+			Vector3 currentPlayerPosition = transform.position;
+			currentPlayerPosition.y = 0;
+
+			var forwardDirection = transform.forward;
+
+			var cos = Mathf.Cos(_meleeAttackAngle * 0.5f * Mathf.Deg2Rad);
 
 			var areaHits = new List<LagCompensatedHit>();
 			HitboxManager hbm = Runner.LagCompensation;
@@ -295,19 +304,36 @@ namespace FusionExamples.Tanknarok
 
 				if (target == null) continue;
 
-				// TODO: check if it is inside the Attack angle area
+				// Check if it is inside the Attack angle area
+				var insideDamageAngle = CheckInsideDamageArea(currentPlayerPosition, forwardDirection, cos, targetObject);
+
+				if (!insideDamageAngle) continue;
 
 				Vector3 impulse = targetObject.transform.position - transform.position;
 				float l = Mathf.Clamp(_meleeAreaRadius - impulse.magnitude, 0, _meleeAreaRadius);
 				impulse = _meleeAreaImpulse * l * impulse.normalized;
-				target.ApplyDamage(impulse, _meleeDamage, Object.InputAuthority, this.player);
+				target.ApplyDamage(impulse, _meleeDamage, Object.InputAuthority, this.player, _meleeHitVfx);
 
 				Debug.LogError($"ApplyMeleeDamage to <color=yellow>{targetObject.name}</color>, damage: <color=cyan>{_meleeDamage}</color>");
 			}
 		}
 
+		private bool CheckInsideDamageArea(Vector3 currentPosition, Vector3 forwardDirection, float cos, GameObject target)
+        {
+			var targetPosition = target.transform.position;
+			targetPosition.y = 0;
+
+			Vector3 directionToTarget = targetPosition - currentPosition;
+
+			var dot = Vector3.Dot(directionToTarget.normalized, forwardDirection);
+
+			if (dot <= cos) return false;
+
+			return true;
+		}
+
 		#region Debug
-        
+
 		[Header("Debug")]
 		[SerializeField] private MeshFilter viewMeshFilter;
 		[SerializeField] private float meshResolution;

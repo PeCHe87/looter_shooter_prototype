@@ -227,7 +227,7 @@ namespace FusionExamples.Tanknarok.Gameplay
 
         [Networked] public byte _netHealth { get; set; }
 
-        public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef source, Player attacker)
+        public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef source, Player attacker, GameObject hitVfx = null)
         {
             if (_status == EnemyStatus.DEAD) return;
 
@@ -238,7 +238,10 @@ namespace FusionExamples.Tanknarok.Gameplay
             if (_netHealth == 0)
             {
                 Death();
+                return;
             }
+
+            ShowHitVfx_Local(hitVfx);
         }
 
         private void Death()
@@ -256,6 +259,23 @@ namespace FusionExamples.Tanknarok.Gameplay
             _art.Toggle(false);
 
             Destroy(gameObject, 1);
+        }
+
+        private void ShowHitVfx_Local(GameObject prefabVfx)
+        {
+            if (prefabVfx == null) return;
+
+            var vfx = Instantiate(prefabVfx, transform);
+
+            vfx.transform.position = transform.position;
+            vfx.transform.localRotation = Quaternion.identity;
+            vfx.transform.localScale = Vector3.one * 2;
+
+            if (!vfx.TryGetComponent<ParticleSystem>(out var particle)) return;
+
+            particle.Play();
+
+            Destroy(vfx, 2);
         }
 
         #endregion

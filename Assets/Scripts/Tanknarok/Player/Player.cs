@@ -34,6 +34,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private TankTeleportOutEffect _teleportOut;
 		[SerializeField] private PlayerFloatingHud _hud = default;
 		[SerializeField] private UI_PlayerInfoPanel _playerInfoPanel = default;
+		[SerializeField] private PlayerChargerVisual _chargerVisual = default;
 
 		[Space(10)]
 		[SerializeField] private GameObject _deathExplosionPrefab;
@@ -413,7 +414,7 @@ namespace FusionExamples.Tanknarok
 		/// <param name="impulse"></param>
 		/// <param name="damage"></param>
 		/// <param name="attacker"></param>
-		public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef attacker, Player projectileOwner)
+		public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef attacker, Player owner, GameObject hitVfx = null)
 		{
 			if (!isActivated || !invulnerabilityTimer.Expired(Runner))
 				return;
@@ -440,7 +441,7 @@ namespace FusionExamples.Tanknarok
 
 				SpawnDeathLoot();
 
-				CheckPlayerKiller(projectileOwner);
+				CheckPlayerKiller(owner);
 
 				GameManager.instance.OnTankDeath();
 			}
@@ -886,11 +887,13 @@ namespace FusionExamples.Tanknarok
 
 			this.amountCollectables += amount;
 
-			//_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
-
 			if (_isLocal)
 			{
 				_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables, "PICKUP");
+
+				var progress = Mathf.Clamp((float)this.amountCollectables / (float)_maxCollectables, 0, 1);
+
+				_chargerVisual.Refresh(progress);
 			}
 		}
 
@@ -905,18 +908,23 @@ namespace FusionExamples.Tanknarok
         {
 			if (Object.HasStateAuthority) return;
 
-			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
+			_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables, "PICKUP");
+
+			var progress = Mathf.Clamp((float)this.amountCollectables / (float)_maxCollectables, 0, 1);
+
+			_chargerVisual.Refresh(progress);
 		}
 
 		private void RefreshCollectablesOnDeath()
         {
 			this.amountCollectables = 0;
 
-			_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
+			//_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
 
 			if (_isLocal)
 			{
 				_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables, "DEATH");
+				_chargerVisual.Refresh(0);
 			}
 		}
 
@@ -950,11 +958,10 @@ namespace FusionExamples.Tanknarok
 
 			this.amountCollectables = 0;
 
-			//_hud.UpdateCollectables(this.amountCollectables, _maxCollectables);
-
 			if (_isLocal)
 			{
 				_playerInfoPanel.UpdateCollectables(this.amountCollectables, _maxCollectables, "DELIVER");
+				_chargerVisual.Refresh(0);
 			}
 		}
 
