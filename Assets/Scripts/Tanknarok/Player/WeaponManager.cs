@@ -82,14 +82,20 @@ namespace FusionExamples.Tanknarok
 
         #endregion
 
-        #region Public methods
-		
-		/// <summary>
-		/// Activate a new weapon when picked up
-		/// </summary>
-		/// <param name="weaponType">Type of weapon that should be activated</param>
-		/// <param name="weaponIndex">Index of weapon the _Weapons list for the player</param>
-		public void ActivateWeapon(WeaponInstallationType weaponType, int weaponIndex)
+        #region Public properties
+
+        public Weapon EquippedWeapon => _weapons[0];
+
+        #endregion
+
+		#region Public methods
+
+        /// <summary>
+        /// Activate a new weapon when picked up
+        /// </summary>
+        /// <param name="weaponType">Type of weapon that should be activated</param>
+        /// <param name="weaponIndex">Index of weapon the _Weapons list for the player</param>
+        public void ActivateWeapon(WeaponInstallationType weaponType, int weaponIndex)
 		{
 			byte selectedWeapon = weaponType == WeaponInstallationType.PRIMARY ? selectedPrimaryWeapon : selectedSecondaryWeapon;
 			byte activeWeapon = weaponType == WeaponInstallationType.PRIMARY ? _activePrimaryWeapon : _activeSecondaryWeapon;
@@ -189,11 +195,17 @@ namespace FusionExamples.Tanknarok
 
 		public void MeleeAttack()
         {
+			TickTimer tickTimer = primaryFireDelay;
+
+			if (!tickTimer.ExpiredOrNotRunning(Runner)) return;
+
 			Debug.LogError("<color=magenta>WeaponManager</color>::MeleeAttack");
 
 			byte weaponIndex =_activePrimaryWeapon;
 			
 			Weapon weapon = _weapons[weaponIndex];
+
+			primaryFireDelay = TickTimer.CreateFromSeconds(Runner, weapon.delay);
 
 			var aimDirection = GetAimingDirection();
 

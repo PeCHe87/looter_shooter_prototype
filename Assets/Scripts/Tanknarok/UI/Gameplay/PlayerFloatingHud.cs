@@ -14,6 +14,7 @@ namespace FusionExamples.Tanknarok.UI
         [SerializeField] private Color _teamRedColor = default;
         [SerializeField] private Image _imgCollectable = default;
         [SerializeField] private GameObject _maxCapacity = default;
+        [SerializeField] private Image _imgHealth = default;
 
         private void Start()
         {
@@ -35,6 +36,11 @@ namespace FusionExamples.Tanknarok.UI
             var progress = Mathf.Clamp((float)amount / (float)max, 0, 1);
 
             RefreshCollectableProgress(progress);
+        }
+
+        public void RefreshHealth(float progress)
+        {
+            _imgHealth.fillAmount = progress;
         }
 
         private void RefreshCollectableProgress(float progress)

@@ -95,6 +95,11 @@ namespace FusionExamples.Tanknarok.CharacterAbilities
             return true;
         }
 
+        public void RefreshRadius(float radius)
+        {
+            _radiusForward = radius;
+        }
+
         #endregion
 
         #region Private methods

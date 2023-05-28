@@ -17,6 +17,10 @@ namespace FusionExamples.Tanknarok.UI
         [SerializeField] private TextMeshProUGUI _txtReloading = default;
         [SerializeField] private Sprite _iconAssault = default;
         [SerializeField] private Sprite _iconMelee = default;
+        [SerializeField] private Image _cooldownAvailable = default;
+
+        [Header("Reloading button")]
+        [SerializeField] private Button _btnReloading = default;
 
         #endregion
 
@@ -24,8 +28,11 @@ namespace FusionExamples.Tanknarok.UI
 
         private bool _isReloading = false;
         private NetworkRunner _runner = default;
-        private TickTimer _cooldown = default;
+        private TickTimer _cooldownReloadingTimer = default;
         private float _delayTime = default;
+        private TickTimer _cooldownAvailableTimer = default;
+        private float _availableDelayTime = default;
+        private bool _isAvailable = true;
 
         #endregion
 
@@ -34,6 +41,8 @@ namespace FusionExamples.Tanknarok.UI
         public void Init()
         {
             _txtReloading.enabled = false;
+
+            _cooldownAvailable.enabled = false;
         }
 
         public void Refresh(int ammo, int magazine)
@@ -48,7 +57,7 @@ namespace FusionExamples.Tanknarok.UI
         public void StartReloading(float delay, TickTimer cooldown, NetworkRunner runner)
         {
             _runner = runner;
-            _cooldown = cooldown;
+            _cooldownReloadingTimer = cooldown;
             _delayTime = delay;
 
             _isReloading = true;
@@ -78,12 +87,26 @@ namespace FusionExamples.Tanknarok.UI
             {
                 case Items.ItemWeaponType.ASSAULT:
                     SetupAssault();
+                    ShowReloadingButton();
                     break;
 
                 case Items.ItemWeaponType.MELEE:
                     SetupMelee();
+                    HideReloadingButton();
                     break;
             }
+        }
+
+        public void StartUsing(float delay, TickTimer cooldown, NetworkRunner runner)
+        {
+            _cooldownAvailableTimer = cooldown;
+            _availableDelayTime = delay;
+            _runner = runner;
+
+            _cooldownAvailable.fillAmount = 1;
+            _cooldownAvailable.enabled = true;
+
+            _isAvailable = false;
         }
 
         #endregion
@@ -92,9 +115,11 @@ namespace FusionExamples.Tanknarok.UI
 
         private void Update()
         {
+            UpdateAvailable();
+
             if (!_isReloading) return;
 
-            var remaining = _cooldown.RemainingTime(_runner);
+            var remaining = _cooldownReloadingTimer.RemainingTime(_runner);
 
             var progress = (remaining / _delayTime);
 
@@ -119,6 +144,33 @@ namespace FusionExamples.Tanknarok.UI
             _txtAmmo.enabled = false;
 
             _progressBar.enabled = false;
+        }
+
+        private void UpdateAvailable()
+        {
+            if (_isAvailable) return;
+
+            var remaining = _cooldownAvailableTimer.RemainingTime(_runner);
+
+            var progress = (remaining / _availableDelayTime);
+
+            _cooldownAvailable.fillAmount = progress ?? 0;
+
+            if (progress > 0) return;
+
+            _isAvailable = true;
+
+            _cooldownAvailable.enabled = false;
+        }
+
+        private void ShowReloadingButton()
+        {
+            _btnReloading.gameObject.Toggle(true);
+        }
+
+        private void HideReloadingButton()
+        {
+            _btnReloading.gameObject.Toggle(false);
         }
 
         #endregion

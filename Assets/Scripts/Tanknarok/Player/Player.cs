@@ -250,6 +250,8 @@ namespace FusionExamples.Tanknarok
 			_damageVisuals = GetComponent<TankDamageVisual>();
 			_damageVisuals.Initialize(playerMaterial);
 
+			RefreshHealthBar();
+
 			PlayerManager.AddPlayer(this);
 
 			// Auto will set proxies to InterpolationDataSources.Snapshots and State/Input authority to InterpolationDataSources.Predicted
@@ -434,6 +436,8 @@ namespace FusionExamples.Tanknarok
 				if (GameManager.playState == GameManager.PlayState.LEVEL)
 					lives -= 1;
 
+				RefreshHealthBar();
+
 				//if (lives > 0)
 				Respawn(_respawnTime);
 
@@ -448,6 +452,9 @@ namespace FusionExamples.Tanknarok
 			else
 			{
 				life -= damage;
+
+				RefreshHealthBar();
+
 				Debug.Log($"Player {playerID} took {damage} damage, life = {life}");
 			}
 
@@ -483,6 +490,8 @@ namespace FusionExamples.Tanknarok
 
 				// Restore health
 				life = MAX_HEALTH;
+
+				RefreshHealthBar();
 
 				if (_isLocal)
 				{
@@ -578,7 +587,11 @@ namespace FusionExamples.Tanknarok
 				return;
 
 			if (powerup.powerupType == PowerupType.HEALTH)
+			{
 				life = MAX_HEALTH;
+
+				RefreshHealthBar();
+			}
 			else
 				weaponManager.InstallWeapon(powerup);
 		}
@@ -1056,20 +1069,31 @@ namespace FusionExamples.Tanknarok
 		{
 			var weaponType = weaponManager.GetWeaponType();
 
-			if (weaponType == ItemWeaponType.NONE)
-			{
-				return;
-			}
+			// NONE
+			if (weaponType == ItemWeaponType.NONE) return;
 
+			// ASSAULT
 			if (weaponType == ItemWeaponType.ASSAULT)
 			{
 				weaponManager.FireWeapon(WeaponManager.WeaponInstallationType.PRIMARY);
+
+				if (_isLocal)
+				{
+					_weaponInformation.StartUsing(weaponManager.EquippedWeapon.delay, weaponManager.primaryFireDelay, Runner);
+				}
+
 				return;
 			}
 
+			// MELEE
 			if (weaponType == ItemWeaponType.MELEE)
 			{
 				weaponManager.MeleeAttack();
+
+				if (_isLocal)
+				{
+					_weaponInformation.StartUsing(weaponManager.EquippedWeapon.delay, weaponManager.primaryFireDelay, Runner);
+				}
 			}
 		}
 
@@ -1112,6 +1136,11 @@ namespace FusionExamples.Tanknarok
 			_playerInfoPanel = FindObjectOfType<UI_PlayerInfoPanel>();
 			_playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH, "INITIALIZATION");
 			_playerInfoPanel.UpdateCollectables(0, _maxCollectables, "INITIALIZATION");
+		}
+
+		private void RefreshHealthBar()
+        {
+			_hud.RefreshHealth((float)life / MAX_HEALTH);
 		}
 
 		#endregion
@@ -1422,6 +1451,9 @@ namespace FusionExamples.Tanknarok
 
 			_inventoryData.items.Set(slotIndex, item);
 
+			// Update area detection radius based on weapon configuration
+			this.targetDetector.RefreshRadius(weaponManager.EquippedWeapon.RadiusDetection);
+
 			if (!_isLocal) return;
 
 			Debug.LogError($"Player::<color=magenta>EquipItem</color> -> item: <color=yellow>{itemId}</color> from slot: <color=yellow>{slotIndex}</color>");
@@ -1442,6 +1474,8 @@ namespace FusionExamples.Tanknarok
 		public void Heal(int amount)
 		{
 			life = (byte)Mathf.Clamp(life + amount, 0, MAX_HEALTH);
+
+			RefreshHealthBar();
 
 			if (_isLocal)
 			{

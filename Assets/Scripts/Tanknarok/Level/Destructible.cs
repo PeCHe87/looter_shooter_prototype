@@ -112,13 +112,10 @@ namespace FusionExamples.Tanknarok.Gameplay
 		[SerializeField] private int _maxHp = default;
 
 		[Networked(OnChanged = nameof(OnHealthChanged))] public byte _netHealth { get; set; }
-		//[Networked] private ParticleSystem _netHitVfx { get; set; }
 
 		public void ApplyDamage(Vector3 impulse, byte damage, PlayerRef source, Player attacker, GameObject hitVfx = null)
 		{
 			if (_isDestroyed) return;
-
-			//_netHitVfx = hitVfx;
 
 			_netHealth = (byte)Mathf.Clamp(_netHealth - damage, 0, _maxHp);
 
@@ -159,18 +156,7 @@ namespace FusionExamples.Tanknarok.Gameplay
 
 		private void ShowHitVfx_Remote()
 		{
-			/*
-			if (HasStateAuthority) return;
-
-			if (_netHitVfx == null) return;
-
-			var vfx = Instantiate(_netHitVfx);
-
-			vfx.transform.position = transform.position;
-			vfx.transform.localRotation = Quaternion.identity;
-
-			vfx.Play();
-			*/
+			// TODO
 		}
 
 		private void Death_Remote()

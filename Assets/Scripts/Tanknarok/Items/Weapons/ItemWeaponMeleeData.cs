@@ -11,5 +11,7 @@ namespace FusionExamples.Tanknarok.Items
         public LayerMask HitMask;
         public float Impulse;
         public GameObject HitVfx;
+        public float DelayBetweenAttacks;
+        public float RadiusDetection;
     }
 }

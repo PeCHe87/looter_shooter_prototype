@@ -235,13 +235,13 @@ namespace FusionExamples.Tanknarok.Gameplay
 
             Debug.LogError($"BaseEnemy::ApplyDamage -> hp: <color=yellow>{_netHealth}/{_maxHp}</color>, damage: <color=cyan>{damage}</color>, is dead: <color=yellow>{_netHealth == 0}</color>, attacker: <color=orange>{attacker.displayName}</color>");
 
+            ShowHitVfx_Local(hitVfx);
+            
             if (_netHealth == 0)
             {
                 Death();
                 return;
             }
-
-            ShowHitVfx_Local(hitVfx);
         }
 
         private void Death()

@@ -26,6 +26,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private PowerupType _powerupType = PowerupType.DEFAULT;
 		[SerializeField] private ParticleSystem _muzzleFlashPrefab;
 		[SerializeField] private float _reloadingTime = 2;
+		[SerializeField] private float _radiusDetection = 0;
 
 		[Header("Melee settings")]
 		[SerializeField] private LayerMask _meleeHitMask = default;
@@ -70,6 +71,7 @@ namespace FusionExamples.Tanknarok
 		public int ItemId => _itemId;
 		public Items.ItemWeaponType WeaponType => _weaponType;
 		public PowerupType powerupType => _powerupType;
+		public float RadiusDetection => _radiusDetection;
 
         #endregion
 
@@ -245,6 +247,7 @@ namespace FusionExamples.Tanknarok
 				_powerupType = assaultData.PowerupType;
 				_reloadingTime = assaultData.reloadingTime;
 				_muzzleFlashPrefab = assaultData.MuzzleFlashPrefab;
+				_radiusDetection = assaultData.RadiusDetection;
 
 				_muzzleFlashList.Clear();
 
@@ -267,6 +270,8 @@ namespace FusionExamples.Tanknarok
 				_meleeDamage = (byte) meleeData.Damage;
 				_meleeAttackAngle = meleeData.Angle;
 				_meleeHitVfx = meleeData.HitVfx;
+				_rateOfFire = meleeData.DelayBetweenAttacks;
+				_radiusDetection = meleeData.RadiusDetection;
 			}
 		}
 
