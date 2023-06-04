@@ -14,9 +14,9 @@ namespace FusionExamples.Tanknarok.UI
         [SerializeField] private Image _progressBar = default;
         [SerializeField] private Image _reloadingBar = default;
         [SerializeField] private TextMeshProUGUI _txtAmmo = default;
-        [SerializeField] private TextMeshProUGUI _txtReloading = default;
         [SerializeField] private Sprite _iconAssault = default;
         [SerializeField] private Sprite _iconMelee = default;
+        [SerializeField] private Sprite _iconNoWeapon = default;
         [SerializeField] private Image _cooldownAvailable = default;
 
         [Header("Reloading button")]
@@ -40,9 +40,9 @@ namespace FusionExamples.Tanknarok.UI
 
         public void Init()
         {
-            _txtReloading.enabled = false;
-
             _cooldownAvailable.enabled = false;
+
+            RefreshWeaponType(Items.ItemWeaponType.NONE);
         }
 
         public void Refresh(int ammo, int magazine)
@@ -65,7 +65,6 @@ namespace FusionExamples.Tanknarok.UI
             _progressBar.fillAmount = 0;
 
             _txtAmmo.enabled = false;
-            _txtReloading.enabled = true;
 
             _reloadingBar.fillAmount = 0;
             _reloadingBar.enabled = true;
@@ -74,7 +73,6 @@ namespace FusionExamples.Tanknarok.UI
         public void StopReloading(int ammo, int magazine)
         {
             _txtAmmo.enabled = true;
-            _txtReloading.enabled = false;
 
             _reloadingBar.enabled = false;
 
@@ -93,6 +91,10 @@ namespace FusionExamples.Tanknarok.UI
                 case Items.ItemWeaponType.MELEE:
                     SetupMelee();
                     HideReloadingButton();
+                    break;
+
+                case Items.ItemWeaponType.NONE:
+                    SetupNoWeapon();
                     break;
             }
         }
@@ -140,6 +142,17 @@ namespace FusionExamples.Tanknarok.UI
         private void SetupMelee()
         {
             _icon.sprite = _iconMelee;
+
+            _txtAmmo.enabled = false;
+
+            _progressBar.enabled = false;
+        }
+
+        private void SetupNoWeapon()
+        {
+            HideReloadingButton();
+
+            _icon.sprite = _iconNoWeapon;
 
             _txtAmmo.enabled = false;
 

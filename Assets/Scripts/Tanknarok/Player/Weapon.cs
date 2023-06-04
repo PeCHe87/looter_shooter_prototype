@@ -11,9 +11,9 @@ namespace FusionExamples.Tanknarok
     /// </summary>
     public class Weapon : NetworkBehaviour
 	{
-        #region Inspector
+		#region Inspector
 
-        [SerializeField] private int _itemId = -1;
+		[SerializeField] private int _itemId = -1;
 		[SerializeField] private Items.ItemWeaponType _weaponType = Items.ItemWeaponType.NONE;
 		[SerializeField] private Transform[] _gunExits;
 		[SerializeField] private Projectile _projectilePrefab; // Networked projectile
@@ -232,6 +232,7 @@ namespace FusionExamples.Tanknarok
 		public void OverrideConfiguration(int id, Items.EquipableItemCatalogData data)
         {
 			_itemId = id;
+
 			_weaponType = data.WeaponData.Type;
 
 			if (data.WeaponData.Type == Items.ItemWeaponType.ASSAULT)
@@ -277,8 +278,6 @@ namespace FusionExamples.Tanknarok
 
 		private void ApplyMeleeDamage()
         {
-            Debug.LogError("<color=magenta>Weapon</color>::ApplyMeleeDamage");
-
 			Vector3 currentPlayerPosition = transform.position;
 			currentPlayerPosition.y = 0;
 
@@ -319,7 +318,7 @@ namespace FusionExamples.Tanknarok
 				impulse = _meleeAreaImpulse * l * impulse.normalized;
 				target.ApplyDamage(impulse, _meleeDamage, Object.InputAuthority, this.player, _meleeHitVfx);
 
-				Debug.LogError($"ApplyMeleeDamage to <color=yellow>{targetObject.name}</color>, damage: <color=cyan>{_meleeDamage}</color>");
+				// Debug.LogError($"ApplyMeleeDamage to <color=yellow>{targetObject.name}</color>, damage: <color=cyan>{_meleeDamage}</color>");
 			}
 		}
 
@@ -336,6 +335,8 @@ namespace FusionExamples.Tanknarok
 
 			return true;
 		}
+
+		
 
 		#region Debug
 

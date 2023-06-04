@@ -47,16 +47,12 @@ namespace FusionExamples.Tanknarok.UI
         {
             var progress = Mathf.Clamp((float)amount / (float)max, 0, 1);
 
-            Debug.LogError($"UpdateHealth -> progress <color=yellow>{progress}</color>, origin: <color=cyan>{origin}</color>");
-
             RefreshHealthProgress(progress);
         }
 
         public void UpdateCollectables(int amount, int max, string origin)
         {
             var progress = Mathf.Clamp((float)amount / (float)max, 0, 1);
-
-            Debug.LogError($"UpdateEnergy -> progress <color=yellow>{progress}</color>, origin: <color=cyan>{origin}</color>");
 
             RefreshCollectableProgress(progress);
         }

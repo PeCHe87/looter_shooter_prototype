@@ -88,8 +88,6 @@ namespace FusionExamples.Tanknarok.UI
 
                 if (!_levelManager.Catalog.TryGetItem(playerItem.id, out var itemCatalog)) return;
 
-                Debug.LogError($"Slot [<color=yellow>{index}</color>] - Item '<color=magenta>{itemCatalog.data.displayName}</color>'");
-
                 _itemInfoPanel.Show(itemCatalog, index);
 
                 return;
@@ -100,8 +98,6 @@ namespace FusionExamples.Tanknarok.UI
             {
                 if (!isSelected) return;
 
-                Debug.LogError($"Slot [<color=yellow>{index}</color>] - <color=cyan>EMPTY</color>");
-
                 return;
             }
 
@@ -109,8 +105,6 @@ namespace FusionExamples.Tanknarok.UI
             if (status == InventorySlotStatus.LOCKED)
             {
                 if (!isSelected) return;
-
-                Debug.LogError($"Slot [<color=yellow>{index}</color>] - <color=orange>LOCKED</color>");
 
                 return;
             }

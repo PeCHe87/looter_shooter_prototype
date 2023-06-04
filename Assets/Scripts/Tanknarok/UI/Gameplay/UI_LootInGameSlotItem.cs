@@ -58,8 +58,6 @@ namespace FusionExamples.Tanknarok
 
         private void Selection()
         {
-            Debug.LogError($"Select slot <color=yellow>{_id}</color>, amount: <color=orange>{_amount}</color>, is selected: <color=cyan>{_isSelected}</color>");
-
             if (_isSelected)
             {
                 MarkAsUnselected();

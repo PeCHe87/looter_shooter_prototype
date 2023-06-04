@@ -1506,8 +1506,8 @@ MonoBehaviour:
   _team: 0
   _kills: 0
   _dashForce: 50
-  _dashDuration: 0.3
-  _dashMaxSpeed: 16
+  _dashDuration: 0.4
+  _dashMaxSpeed: 18
   _dashRecoveringDelay: 0.5
   _dashFireRate: 2
   _dashInfo: {fileID: 0}

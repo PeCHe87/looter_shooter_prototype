@@ -33,8 +33,6 @@ namespace FusionExamples.Tanknarok
 
         public void Init(Player player, System.Action<int, int> callback)
         {
-            Debug.LogError("<color=magenta>LootInGamePanel</color>::Init");
-
             _player = player;
 
             _callbackTake = callback;
@@ -111,8 +109,6 @@ namespace FusionExamples.Tanknarok
             if (_levelManager.Catalog.TryGetItem(_slotItemId, out var itemCatalog))
             {
                 var displayName = itemCatalog.data.displayName;
-
-                Debug.LogError($"Take item <color=yellow>{displayName}</color>(<color=magenta>{_slotAmount}</color>)");
 
                 _callbackTake?.Invoke(_slotItemId, _slotAmount);
 

@@ -233,7 +233,7 @@ namespace FusionExamples.Tanknarok.Gameplay
 
             _netHealth = (byte)Mathf.Clamp(_netHealth - damage, 0, _maxHp);
 
-            Debug.LogError($"BaseEnemy::ApplyDamage -> hp: <color=yellow>{_netHealth}/{_maxHp}</color>, damage: <color=cyan>{damage}</color>, is dead: <color=yellow>{_netHealth == 0}</color>, attacker: <color=orange>{attacker.displayName}</color>");
+            // DebugAttacker(_netHealth, _maxHp, damage, attacker);
 
             ShowHitVfx_Local(hitVfx);
             
@@ -244,7 +244,14 @@ namespace FusionExamples.Tanknarok.Gameplay
             }
         }
 
-        private void Death()
+		private void DebugAttacker(byte netHealth, int maxHp, byte damage, Player attacker)
+		{
+            if (attacker == null) return;
+
+            Debug.LogError($"BaseEnemy::ApplyDamage -> hp: <color=yellow>{netHealth}/{maxHp}</color>, damage: <color=cyan>{damage}</color>, is dead: <color=yellow>{netHealth == 0}</color>, attacker: <color=orange>{attacker.displayName}</color>");
+        }
+
+		private void Death()
         {
             _initialized = false;
 

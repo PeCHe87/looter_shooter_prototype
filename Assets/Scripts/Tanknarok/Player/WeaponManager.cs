@@ -18,11 +18,13 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private Player _player;
 		[SerializeField] private Transform _pivot = default;
 
-        #endregion
+		#endregion
 
-        #region Networked properties
+		#region Networked properties
 
-        [Networked]
+		[Networked(OnChanged = nameof(OnWeaponIdChanged))]
+		private int itemId { get; set; }
+		[Networked]
 		public byte selectedPrimaryWeapon { get; set; }
 
 		[Networked]
@@ -199,8 +201,6 @@ namespace FusionExamples.Tanknarok
 
 			if (!tickTimer.ExpiredOrNotRunning(Runner)) return;
 
-			Debug.LogError("<color=magenta>WeaponManager</color>::MeleeAttack");
-
 			byte weaponIndex =_activePrimaryWeapon;
 			
 			Weapon weapon = _weapons[weaponIndex];
@@ -286,8 +286,6 @@ namespace FusionExamples.Tanknarok
 
 		private void RefreshVisualWeapon(string displayName, GameObject visualRepresentation)
         {
-			Debug.LogError($"Refresh visual weapon for <color=yellow>{visualRepresentation.name}</color>");
-
 			if (_pivot.childCount > 0)
             {
 				var previousWeapon = _pivot.GetChild(0);
@@ -354,6 +352,8 @@ namespace FusionExamples.Tanknarok
 				previousWeaponId = oldWeapon.ItemId;
 			}
 
+			this.itemId = itemId;
+
 			var weapon = _weapons[0];
 
 			weapon.OverrideConfiguration(itemId, itemCatalogData);
@@ -366,6 +366,24 @@ namespace FusionExamples.Tanknarok
 
 			StartReloading(weapon);
         }
+
+		public void Equip_Remote()
+        {
+			if (Object.HasStateAuthority) return;
+
+			if (!_player.GetLevelManager().Catalog.TryGetItem(itemId, out var item)) return;
+
+			var itemData = (Items.EquipableItemCatalogData)item.data;
+
+			RefreshVisualWeapon(itemData.displayName, itemData.WeaponData.Visual);
+		}
+
+		private static void OnWeaponIdChanged(Changed<WeaponManager> changed)
+        {
+			if (!changed.Behaviour) return;
+
+			changed.Behaviour.Equip_Remote();
+		}
 
         #endregion
     }

@@ -49,8 +49,6 @@ namespace FusionExamples.Tanknarok.UI
 
         public void Show(Items.ItemCatalogData itemCatalog, int index)
         {
-            Debug.LogError($"InventoryItemPanel::<color=magenta>Show</color> -> Item '<color=magenta>{itemCatalog.data.displayName}</color>'");
-
             GetItemByType(itemCatalog);
 
             _slotIndex = index;
@@ -107,8 +105,6 @@ namespace FusionExamples.Tanknarok.UI
 
         private void EquipItem()
         {
-            Debug.LogError($"Equip item <color=yellow>{_item.displayName}</color>");
-
             ((Items.EquipableItemCatalogData)_item).Equip(_player);
 
             _player.EquipInventorySlot(_slotIndex);

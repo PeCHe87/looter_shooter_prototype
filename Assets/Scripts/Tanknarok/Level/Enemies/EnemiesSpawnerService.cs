@@ -36,12 +36,8 @@ namespace FusionExamples.Tanknarok.Gameplay
 
             var amount = UnityEngine.Random.Range(_minAmount, _maxAmount+1);
 
-            Debug.LogError($"Spawn <color=yellow>{amount}</color> enemies");
-
             for (int i = 0; i < amount; i++)
             {
-                Debug.LogError($"Spawn enemy <color=yellow>{ENEMY_ID}{_id}</color>");
-
                 var point = Utils.GetPositionAroundPoint(pivot, _radius);
                 var spawnPosition = new Vector3(point.x, 0, point.y);
 

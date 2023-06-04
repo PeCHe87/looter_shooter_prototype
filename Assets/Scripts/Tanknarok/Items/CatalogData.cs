@@ -12,6 +12,8 @@ namespace FusionExamples.Tanknarok.Items
         {
             item = _items.FirstOrDefault( x => x.data.id == id );
 
+            if (item == null || item.data == null) return false;
+
             return item.data.id != 0;
         }
     }

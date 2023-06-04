@@ -46,6 +46,7 @@ namespace FusionExamples.Tanknarok
 
         public float respawnProgress => respawnTimerFloat / _respawnDuration;
 		public int Amount => _amount;
+		public bool IsRespawning => isRespawning;
 
 		#endregion
 
