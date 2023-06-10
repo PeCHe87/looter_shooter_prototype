@@ -51,12 +51,13 @@ namespace FusionExamples.Tanknarok
 
         private byte _activePrimaryWeapon;
 		private byte _activeSecondaryWeapon;
+		private Items.ItemWeaponAssaultData _assaultWeaponData = default;
 
-        #endregion
+		#endregion
 
-        #region Networked methods
+		#region Networked methods
 
-        public override void Render()
+		public override void Render()
 		{
 			ShowAndHideWeapons();
 		}
@@ -67,7 +68,8 @@ namespace FusionExamples.Tanknarok
 			var weapon = _weapons[weaponIndex];
 
 			primaryAmmo = weapon.ammo;
-			_player.RefreshWeaponInformation(primaryAmmo, weapon.InitialAmmo);
+			
+			//_player.RefreshWeaponInformation(primaryAmmo, weapon.InitialAmmo);
 		}
 
         public override void FixedUpdateNetwork()
@@ -87,17 +89,18 @@ namespace FusionExamples.Tanknarok
         #region Public properties
 
         public Weapon EquippedWeapon => _weapons[0];
+		public Items.ItemWeaponAssaultData AssaultWeaponData => _assaultWeaponData;
 
-        #endregion
+		#endregion
 
 		#region Public methods
 
-        /// <summary>
-        /// Activate a new weapon when picked up
-        /// </summary>
-        /// <param name="weaponType">Type of weapon that should be activated</param>
-        /// <param name="weaponIndex">Index of weapon the _Weapons list for the player</param>
-        public void ActivateWeapon(WeaponInstallationType weaponType, int weaponIndex)
+		/// <summary>
+		/// Activate a new weapon when picked up
+		/// </summary>
+		/// <param name="weaponType">Type of weapon that should be activated</param>
+		/// <param name="weaponIndex">Index of weapon the _Weapons list for the player</param>
+		public void ActivateWeapon(WeaponInstallationType weaponType, int weaponIndex)
 		{
 			byte selectedWeapon = weaponType == WeaponInstallationType.PRIMARY ? selectedPrimaryWeapon : selectedSecondaryWeapon;
 			byte activeWeapon = weaponType == WeaponInstallationType.PRIMARY ? _activePrimaryWeapon : _activeSecondaryWeapon;
@@ -113,7 +116,7 @@ namespace FusionExamples.Tanknarok
 				selectedPrimaryWeapon = (byte)weaponIndex;
 				primaryAmmo = _weapons[(byte) weaponIndex].ammo;
 
-				_player.RefreshWeaponInformation(primaryAmmo, _weapons[(byte)weaponIndex].InitialAmmo);
+				_player.RefreshAssaultWeaponInformation(primaryAmmo);
 			}
 			else
 			{
@@ -134,7 +137,9 @@ namespace FusionExamples.Tanknarok
 
 			if (!IsWeaponFireAllowed(weaponType)) return;
 
-			byte ammo = weaponType == WeaponInstallationType.PRIMARY ? primaryAmmo : secondaryAmmo;
+			var ammoId = _assaultWeaponData.AmmoType.id;
+
+			byte ammo = primaryAmmo;	// (byte)_player.GetAmmo(ammoId);		//weaponType == WeaponInstallationType.PRIMARY ? primaryAmmo : secondaryAmmo;
 
 			TickTimer tickTimer = weaponType==WeaponInstallationType.PRIMARY ? primaryFireDelay : secondaryFireDelay;
 			if (tickTimer.ExpiredOrNotRunning(Runner) && ammo > 0)
@@ -148,6 +153,8 @@ namespace FusionExamples.Tanknarok
 
 				if (!weapon.infiniteAmmo)
 					ammo--;
+				
+				_player.ConsumeAmmo(ammo, ammoId);
 
 				if (weaponType == WeaponInstallationType.PRIMARY)
 				{
@@ -159,11 +166,6 @@ namespace FusionExamples.Tanknarok
 					secondaryFireDelay = TickTimer.CreateFromSeconds(Runner, weapon.delay);
 					secondaryAmmo = ammo;
 				}
-					
-				//if (/*Object.HasStateAuthority &&*/ ammo == 0)
-				//{
-				//	ResetWeapon(weaponType);
-				//}
 
 				if (ammo == 0 && !this.isReloading)
                 {
@@ -171,7 +173,7 @@ namespace FusionExamples.Tanknarok
                 }
 				else
                 {
-					_player.RefreshWeaponInformation(ammo, weapon.InitialAmmo);
+					_player.RefreshAssaultWeaponInformation(ammo);
                 }
 			}
 		}
@@ -329,11 +331,13 @@ namespace FusionExamples.Tanknarok
         {
 			Weapon weapon = _weapons[_activePrimaryWeapon];
 
-			this.primaryAmmo = weapon.InitialAmmo;
+			var currentAmmo = (byte)_player.GetAmmo(_assaultWeaponData.AmmoType.id);
+
+			this.primaryAmmo = (currentAmmo >= weapon.InitialAmmo) ? weapon.InitialAmmo : currentAmmo;
 
 			this.isReloading = false;
 
-			_player.StopReloadingWeapon(this.primaryAmmo, weapon.InitialAmmo);
+			_player.StopReloadingWeapon(this.primaryAmmo); //, weapon.InitialAmmo);
         }
 
         #endregion
@@ -353,6 +357,11 @@ namespace FusionExamples.Tanknarok
 			}
 
 			this.itemId = itemId;
+
+			if (itemCatalogData.WeaponData.Type == Items.ItemWeaponType.ASSAULT)
+			{
+				_assaultWeaponData = (Items.ItemWeaponAssaultData)itemCatalogData.WeaponData;
+			}
 
 			var weapon = _weapons[0];
 

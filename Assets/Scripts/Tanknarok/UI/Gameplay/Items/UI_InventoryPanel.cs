@@ -5,9 +5,17 @@ namespace FusionExamples.Tanknarok.UI
 {
     public class UI_InventoryPanel : MonoBehaviour
     {
-        [SerializeField] private UI_InventorySlot[] _slots = default;
+		#region Inspector
+
+		[SerializeField] private UI_InventorySlot[] _slots = default;
         [SerializeField] private LevelManager _levelManager = default;
         [SerializeField] private UI_InventoryItemPanel _itemInfoPanel = default;
+        [SerializeField] private GameObject _fullPanel = default;
+        [SerializeField] private float _fullPanelVisibleTime = default;
+
+        #endregion
+
+        #region Public methods
 
         public void Init(PlayerInventoryData data, Player player)
         {
@@ -17,6 +25,8 @@ namespace FusionExamples.Tanknarok.UI
 
                 slot.Init(_levelManager, SlotSelection);
             }
+
+            HideFullPanel();
 
             Refresh(data);
 
@@ -65,7 +75,18 @@ namespace FusionExamples.Tanknarok.UI
             }
         }
 
-        private void SlotSelection(int index, bool isSelected, InventorySlotStatus status, PlayerInventoryItemData playerItem)
+        public void ShowFullPanel()
+		{
+            _fullPanel.Toggle(true);
+
+            Invoke(nameof(HideFullPanel), _fullPanelVisibleTime);
+		}
+
+		#endregion
+
+		#region Private methods
+
+		private void SlotSelection(int index, bool isSelected, InventorySlotStatus status, PlayerInventoryItemData playerItem)
         {
             // Regular
             if (status == InventorySlotStatus.REGULAR)
@@ -119,5 +140,12 @@ namespace FusionExamples.Tanknarok.UI
                 slot.Deselect();
             }
         }
-    }
+
+        private void HideFullPanel()
+		{
+            _fullPanel.Toggle(false);
+		}
+
+		#endregion
+	}
 }

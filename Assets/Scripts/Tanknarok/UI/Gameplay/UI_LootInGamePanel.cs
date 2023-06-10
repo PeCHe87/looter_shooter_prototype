@@ -97,12 +97,12 @@ namespace FusionExamples.Tanknarok
 
         private void Take()
         {
-            // Check if player's inventory is already full
-            if (_player.IsInventoryFull())
-            {
-                Debug.LogError($"INVENTORY IS FULL!");
+            var alreadyHaveItem = _player.CheckAlreadyHaveItem(_slotItemId);
 
-                return;
+            if (!alreadyHaveItem)
+            {
+                // Check if player's inventory is already full
+                if (_player.IsInventoryFull()) return;
             }
 
             // Get item information

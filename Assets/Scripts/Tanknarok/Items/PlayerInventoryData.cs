@@ -113,5 +113,43 @@ namespace FusionExamples.Tanknarok.Items
 
             return true;
         }
+
+        public int GetAmmoByType(int id)
+		{
+            var total = 0;
+
+			for (int i = 0; i < items.Length; i++)
+			{
+                var item = items[i];
+
+                if (item.id != id) continue;
+
+                total += item.amount;
+			}
+
+            return total;
+		}
+
+        public bool TryGetSlotIndexByItem(int id, out int index)
+		{
+            index = -1;
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                var item = items[i];
+
+                if (item.locked) continue;
+
+                if (item.IsEmpty()) continue;
+
+                if (item.id != id) continue;
+
+                index = i;
+
+                return true;
+            }
+
+            return false;
+        }
     }
 }

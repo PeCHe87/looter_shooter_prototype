@@ -33,6 +33,7 @@ namespace FusionExamples.Tanknarok.UI
         private TickTimer _cooldownAvailableTimer = default;
         private float _availableDelayTime = default;
         private bool _isAvailable = true;
+        private int _magazine = 0;
 
         #endregion
 
@@ -45,13 +46,13 @@ namespace FusionExamples.Tanknarok.UI
             RefreshWeaponType(Items.ItemWeaponType.NONE);
         }
 
-        public void Refresh(int ammo, int magazine)
+        public void Refresh(int ammo, int totalAmmo)
         {
-            var progress = (float)ammo / magazine;
+            var progress = (float)ammo / _magazine;
 
             _progressBar.fillAmount = progress;
 
-            _txtAmmo.text = $"<color=#F8AC08>{ammo}</color>/<size=20>{magazine}</size>";
+            _txtAmmo.text = $"<color=#F8AC08>{ammo}</color>/<size=20>{totalAmmo}</size>";
         }
 
         public void StartReloading(float delay, TickTimer cooldown, NetworkRunner runner)
@@ -70,21 +71,23 @@ namespace FusionExamples.Tanknarok.UI
             _reloadingBar.enabled = true;
         }
 
-        public void StopReloading(int ammo, int magazine)
+        public void StopReloading(int ammo, int totalAmmo)
         {
             _txtAmmo.enabled = true;
 
             _reloadingBar.enabled = false;
 
-            Refresh(ammo, magazine);
+            _magazine = ammo;
+
+            Refresh(ammo, totalAmmo);
         }
 
-        public void RefreshWeaponType(Items.ItemWeaponType weaponType)
+        public void RefreshWeaponType(Items.ItemWeaponType weaponType, Items.ItemWeaponData weaponData = null)
         {
             switch (weaponType)
             {
                 case Items.ItemWeaponType.ASSAULT:
-                    SetupAssault();
+                    SetupAssault(weaponData);
                     ShowReloadingButton();
                     break;
 
@@ -130,9 +133,13 @@ namespace FusionExamples.Tanknarok.UI
             _reloadingBar.fillAmount = fillAmount ?? 0;
         }
 
-        private void SetupAssault()
+        private void SetupAssault(Items.ItemWeaponData data)
         {
-            _icon.sprite = _iconAssault;
+            var assaultData = (Items.ItemWeaponAssaultData)data;
+
+            var icon = (assaultData.AmmoType != null) ? assaultData.AmmoType.icon : _iconAssault;
+
+            _icon.sprite = icon;
 
             _txtAmmo.enabled = true;
 

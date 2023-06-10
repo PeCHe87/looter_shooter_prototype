@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace FusionExamples.Tanknarok.Items
 {
-    public enum ItemType { NONE, RESOURCE, CONSUMABLE, EQUIPABLE_WEAPON, EQUIPABLE_ARMOR }
+    public enum ItemType { NONE, RESOURCE, CONSUMABLE, EQUIPABLE_WEAPON, EQUIPABLE_ARMOR, AMMO }
 
     /// <summary>
     /// Class that represents the base item catalog information that is showable on UI
@@ -22,5 +22,10 @@ namespace FusionExamples.Tanknarok.Items
         {
             return (data.type == ItemType.EQUIPABLE_WEAPON) || (data.type == ItemType.EQUIPABLE_ARMOR);
         }
+
+        public bool IsWeapon()
+		{
+            return data.type == ItemType.EQUIPABLE_WEAPON;
+		}
     }
 }

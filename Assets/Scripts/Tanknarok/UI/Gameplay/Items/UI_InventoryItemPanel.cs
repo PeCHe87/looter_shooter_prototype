@@ -16,6 +16,10 @@ namespace FusionExamples.Tanknarok.UI
         [SerializeField] private TextMeshProUGUI _txtName = default;
         [SerializeField] private Image _icon = default;
 
+        [Header("Ammo slot")]
+        [SerializeField] private GameObject _ammoSlot = default;
+        [SerializeField] private Image _ammoIcon = default;
+
         #endregion
 
         #region Private properties
@@ -57,7 +61,18 @@ namespace FusionExamples.Tanknarok.UI
 
             _btnUse.gameObject.Toggle(itemCatalog.IsConsumable());
 
-            _btnEquip.gameObject.Toggle(itemCatalog.IsEquipable());
+            var isEquipable = itemCatalog.IsEquipable();
+
+            _btnEquip.gameObject.Toggle(isEquipable);
+
+            if (isEquipable)
+			{
+                RefreshAmmoSlot(itemCatalog);
+			}
+            else
+			{
+                HideAmmoSlot();
+			}
 
             _icon.sprite = itemCatalog.data.icon;
 
@@ -120,6 +135,30 @@ namespace FusionExamples.Tanknarok.UI
 
             Hide();
         }
+
+        private void RefreshAmmoSlot(Items.ItemCatalogData itemCatalog)
+		{
+            var weaponData = ((Items.EquipableItemCatalogData)itemCatalog.data).WeaponData;
+
+            if (weaponData.Type != Items.ItemWeaponType.ASSAULT)
+			{
+                HideAmmoSlot();
+                return;
+			}
+
+            var assaultWeaponData = (Items.ItemWeaponAssaultData)weaponData;
+
+            var icon = assaultWeaponData.AmmoType.icon;
+
+            _ammoIcon.sprite = icon;
+
+            _ammoSlot.Toggle(true);
+		}
+
+        private void HideAmmoSlot()
+		{
+            _ammoSlot.Toggle(false);
+		}
 
         #endregion
     }

@@ -57,12 +57,14 @@ namespace FusionExamples.Tanknarok
 		private float _visible;
 		private bool _active;
 		private List<ParticleSystem> _muzzleFlashList = new List<ParticleSystem>();
+		private Items.ItemWeaponData _data = default;
+		private bool _hasWeaponEquipped = false;
 
-        #endregion
+		#endregion
 
-        #region Public properties
+		#region Public properties
 
-        public float delay => _rateOfFire;
+		public float delay => _rateOfFire;
 		public bool isShowing => _visible >= 1.0f;
 		public byte ammo => _ammo;
 		public bool infiniteAmmo => _infiniteAmmo;
@@ -72,6 +74,8 @@ namespace FusionExamples.Tanknarok
 		public Items.ItemWeaponType WeaponType => _weaponType;
 		public PowerupType powerupType => _powerupType;
 		public float RadiusDetection => _radiusDetection;
+		public Items.ItemWeaponData Data => _data;
+		public bool HasWeaponEquipped => _hasWeaponEquipped;
 
         #endregion
 
@@ -234,6 +238,10 @@ namespace FusionExamples.Tanknarok
 			_itemId = id;
 
 			_weaponType = data.WeaponData.Type;
+
+			_data = data.WeaponData;
+
+			_hasWeaponEquipped = true;
 
 			if (data.WeaponData.Type == Items.ItemWeaponType.ASSAULT)
 			{

@@ -15,5 +15,6 @@ namespace FusionExamples.Tanknarok.Items
 		public PowerupType PowerupType = PowerupType.DEFAULT;
 		public float reloadingTime = 2;
 		public float RadiusDetection;
+		public BaseItemCatalogData AmmoType;
 	}
 }

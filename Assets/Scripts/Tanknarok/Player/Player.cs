@@ -1097,11 +1097,15 @@ namespace FusionExamples.Tanknarok
 
         #region Weapon actions
 
-        public void RefreshWeaponInformation(int ammo, int magazine)
+        public void RefreshAssaultWeaponInformation(int ammo)
         {
             if (!_isLocal) return;
 
-            _weaponInformation.Refresh(ammo, magazine);
+            if (!weaponManager.EquippedWeapon.HasWeaponEquipped) return;
+
+            var totalAmmo = GetEquippedWeaponTotalAmmo();
+
+            _weaponInformation.Refresh(ammo, totalAmmo);
         }
 
         public void StartReloadingWeapon(float reloadingTime, TickTimer cooldown)
@@ -1111,11 +1115,13 @@ namespace FusionExamples.Tanknarok
             _weaponInformation.StartReloading(reloadingTime, cooldown, Runner);
         }
 
-        public void StopReloadingWeapon(int ammo, int magazine)
+        public void StopReloadingWeapon(int ammo) //, int magazine)
         {
             if (!_isLocal) return;
 
-            _weaponInformation.StopReloading(ammo, magazine);
+            var totalAmmo = GetEquippedWeaponTotalAmmo();
+
+            _weaponInformation.StopReloading(ammo, totalAmmo);
         }
 
         public void UseWeapon()
@@ -1148,6 +1154,36 @@ namespace FusionExamples.Tanknarok
                     _weaponInformation.StartUsing(weaponManager.EquippedWeapon.delay, weaponManager.primaryFireDelay, Runner);
                 }
             }
+        }
+
+        public int GetAmmo(int ammoId)
+		{
+            int ammo = _inventoryData.GetAmmoByType(ammoId);
+
+            return ammo;
+		}
+
+        public void ConsumeAmmo(byte ammo, int ammoId)
+        {
+            var slotExist = _inventoryData.TryGetSlotIndexByItem(ammoId, out var slotIndex);
+
+            if (!slotExist) return;
+
+            RPC_ConsumeItem(this.playerID, slotIndex);
+
+            // Refresh weapon input info
+            RefreshAssaultWeaponInformation(ammo);
+        }
+
+        private int GetEquippedWeaponTotalAmmo()
+		{
+            var weaponData = weaponManager.AssaultWeaponData;
+
+            var ammoType = weaponData.AmmoType;
+
+            var totalAmmo = _inventoryData.GetAmmoByType(ammoType.id);
+
+            return totalAmmo;
         }
 
         #endregion
@@ -1405,9 +1441,30 @@ namespace FusionExamples.Tanknarok
             RPC_EquipItem(this.playerID, slotIndex);
         }
 
+        public bool CheckAlreadyHaveItem(int itemId)
+		{
+            // Check if item exists
+            if (!GetLevelManager().Catalog.TryGetItem(itemId, out var item)) return false;
+
+            // Check if item is a weapon
+            if (item.IsWeapon()) return false;
+
+            // Check if item already exists into inventory
+            if (!_inventoryData.TryGetSlotIndexByItem(itemId, out var index)) return false;
+
+            return true;
+		}
+
         public bool IsInventoryFull()
         {
-            return _inventoryData.IsFull();
+            var isFull = _inventoryData.IsFull();
+
+            if (isFull)
+            {
+                _inventoryPanel.ShowFullPanel();
+            }
+
+            return isFull;
         }
 
         [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
@@ -1429,52 +1486,8 @@ namespace FusionExamples.Tanknarok
 
             if (!_isLocal) return;
 
-            Debug.LogError($"Player::<color=magenta>ConsumeItem</color> -> item: <color=yellow>{item.id}</color> from slot: <color=yellow>{slotIndex}</color>");
-
             _inventoryPanel.Refresh(_inventoryData);
         }
-
-        /*
-                [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
-                public void RPC_SpawnLootWhenDying(int playerId, RpcInfo info = default)
-                {
-                    Debug.LogError($"Player::<color=magenta>SpawnDeathLoot</color> -> player <color=yellow>{this.displayName}</color> ({playerId} / {this.playerID})");
-
-                    if (playerId != this.playerID) return;
-
-                    var amount = _inventoryData.items.Length;
-
-                    var items = new ItemLootData[amount];
-
-                    for (int i = 0; i < amount; i++)
-                    {
-                        var playerItem = _inventoryData.items.Get(i);
-                        var lootItem = new ItemLootData()
-                        {
-                            id = playerItem.id,
-                            amount = playerItem.amount
-                        };
-
-                        items[i] = lootItem;
-                    }
-
-                    if (Object.HasStateAuthority)
-                    {
-                        // Create death body loot
-                        _levelManager.PlayerDeathLoot.SpawnLoot(transform.position, items);
-
-                        _levelManager.EnemiesSpawnerService.SpawnEnemies(transform.position);
-                    }
-
-                    // Empty inventory
-                    _inventoryData.SetEmpty();
-
-                    if (!_isLocal) return;
-
-                    // Update inventory panel
-                    _inventoryPanel.Refresh(_inventoryData);
-                }
-        */
 
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         public void RPC_SpawnLootWhenDying(int playerId, ItemLootData[] items, RpcInfo info = default)
@@ -1482,8 +1495,6 @@ namespace FusionExamples.Tanknarok
             if (items.Length == 0) return;
 
             if (playerId != this.playerID) return;
-
-            Debug.LogError($"Player::<color=magenta>SpawnDeathLoot</color>");
 
             var levelManager = GetLevelManager();
 
@@ -1532,7 +1543,8 @@ namespace FusionExamples.Tanknarok
             _inventoryPanel.Refresh(_inventoryData);
 
             // Refresh weapon information based on weapon type
-            _weaponInformation.RefreshWeaponType(((EquipableItemCatalogData)itemCatalog.data).WeaponData.Type);
+            var data = ((EquipableItemCatalogData)itemCatalog.data).WeaponData;
+            _weaponInformation.RefreshWeaponType(data.Type, data);
 
             // Refresh player information panel with new equipped weapon
             _playerInfoPanel.RefreshWeapon(itemCatalog.data.icon);
