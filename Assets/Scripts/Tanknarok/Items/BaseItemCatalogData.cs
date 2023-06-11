@@ -10,5 +10,6 @@ namespace FusionExamples.Tanknarok.Items
         public ItemType type;
         public string displayName;
         public Sprite icon;
+        public string description;
     }
 }

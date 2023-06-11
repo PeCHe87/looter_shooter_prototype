@@ -24,6 +24,7 @@ namespace FusionExamples.Tanknarok.UI
 
         [Header("Weapon info")]
         [SerializeField] private Image _weaponIcon = default;
+        [SerializeField] private UI_PlayerInfoWeaponsPanel _weaponInfoPanel = default;
 
         #endregion
 
@@ -37,6 +38,11 @@ namespace FusionExamples.Tanknarok.UI
         #endregion
 
         #region Public methods
+
+        public void SetPlayer(Player player)
+		{
+            _weaponInfoPanel.SetPlayer(player);
+		}
 
         public void SetDisplayName(string displayName)
         {
@@ -57,9 +63,9 @@ namespace FusionExamples.Tanknarok.UI
             RefreshCollectableProgress(progress);
         }
 
-        public void RefreshWeapon(Sprite icon)
+        public void RefreshWeapon(Items.ItemCatalogData itemCatalog)
         {
-            _weaponIcon.sprite = icon;
+            _weaponInfoPanel.EquipWeapon(itemCatalog);
         }
 
         #endregion

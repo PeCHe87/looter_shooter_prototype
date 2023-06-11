@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using FusionExamples.Tanknarok.Items;
+using FusionExamples.Tanknarok.UI;
 
 namespace FusionExamples.Tanknarok
 {
@@ -17,6 +18,8 @@ namespace FusionExamples.Tanknarok
         [SerializeField] private LevelManager _levelManager = default;
         [SerializeField] private UI_LootInGameSlotItem[] _slots = default;
         [SerializeField] private Button _btnTake = default;
+        [SerializeField] private UI_LootItemInfoPanel _itemInfo = default;
+        [SerializeField] private CameraStrategy_SingleTarget _camera = default;
 
         #endregion
 
@@ -62,7 +65,11 @@ namespace FusionExamples.Tanknarok
 
             HideTakeButton();
 
+            _itemInfo.Hide();
+
             _content.Toggle(true);
+
+            _camera.InventoryOpen();
         }
 
         public void Close()
@@ -70,6 +77,8 @@ namespace FusionExamples.Tanknarok
             // TODO: sfx
 
             Hide();
+
+            _camera.InventoryClose();
         }
 
         public void Remove(int id)
@@ -111,6 +120,10 @@ namespace FusionExamples.Tanknarok
                 var displayName = itemCatalog.data.displayName;
 
                 _callbackTake?.Invoke(_slotItemId, _slotAmount);
+
+                HideTakeButton();
+
+                HideInfoPanel();
 
                 return;
             }
@@ -176,6 +189,8 @@ namespace FusionExamples.Tanknarok
 
                 ShowTakeButton();
 
+                ShowInfoPanel(id);
+
                 return;
             }
 
@@ -187,6 +202,8 @@ namespace FusionExamples.Tanknarok
             }
 
             HideTakeButton();
+
+            HideInfoPanel();
         }
 
         private void ShowTakeButton()
@@ -227,6 +244,24 @@ namespace FusionExamples.Tanknarok
             }
         }
 
-        #endregion
-    }
+		#endregion
+
+		#region Info panel
+
+        private void HideInfoPanel()
+		{
+            _itemInfo.Hide();
+		}
+
+        private void ShowInfoPanel(int id)
+		{
+            var itemExist = _levelManager.Catalog.TryGetItem(id, out var itemCatalog);
+
+            if (!itemExist) return;
+
+            _itemInfo.Show(itemCatalog);
+        }
+
+		#endregion
+	}
 }

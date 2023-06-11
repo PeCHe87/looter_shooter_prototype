@@ -20,6 +20,7 @@ namespace FusionExamples.Tanknarok
 		[SerializeField] private float _zOffset = 5f;
 		[SerializeField] private float _maxDist = 64f;
 		[SerializeField] private float _minDist = 50f;
+		[SerializeField] private float _inventoryOffset = 30f;
 
 		private float _distanceMultiplier = 1f;
 		private float _maxDistanceMultiplier = 1.4f;
@@ -35,6 +36,7 @@ namespace FusionExamples.Tanknarok
 		private Vector3 _averageTargetGizmoPosition;
 		private Vector3 _weightedTargetGizmoPosition;
 		private Transform _localPlayer = default;
+		private bool _inventoryOpen = false;
 
 
 		private void Awake()
@@ -222,6 +224,11 @@ namespace FusionExamples.Tanknarok
 				goalPosition += _targets[0].transform.forward * _zOffset;
 			}
 
+			if (_inventoryOpen)
+			{
+				goalPosition += Vector3.right * _inventoryOffset;
+			}
+
 			//Camera parent position
 			transform.position = Vector3.Lerp(transform.position, goalPosition, Time.fixedDeltaTime * _moveSpeed);
 		}
@@ -248,5 +255,19 @@ namespace FusionExamples.Tanknarok
 			Gizmos.color = Color.blue;
 			Gizmos.DrawSphere(_averageTargetGizmoPosition, 0.4f);
 		}
+
+		#region Inventory events
+
+		public void InventoryOpen()
+		{
+			_inventoryOpen = true;
+		}
+
+		public void InventoryClose()
+		{
+			_inventoryOpen = false;
+		}
+
+		#endregion
 	}
 }

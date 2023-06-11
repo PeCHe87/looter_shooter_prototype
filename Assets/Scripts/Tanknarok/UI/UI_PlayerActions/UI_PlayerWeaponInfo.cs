@@ -82,7 +82,7 @@ namespace FusionExamples.Tanknarok.UI
             Refresh(ammo, totalAmmo);
         }
 
-        public void RefreshWeaponType(Items.ItemWeaponType weaponType, Items.ItemWeaponData weaponData = null)
+        public void RefreshWeaponType(Items.ItemWeaponType weaponType, Items.ItemWeaponData weaponData = null, Sprite icon = null)
         {
             switch (weaponType)
             {
@@ -92,7 +92,7 @@ namespace FusionExamples.Tanknarok.UI
                     break;
 
                 case Items.ItemWeaponType.MELEE:
-                    SetupMelee();
+                    SetupMelee(weaponData, icon);
                     HideReloadingButton();
                     break;
 
@@ -146,9 +146,9 @@ namespace FusionExamples.Tanknarok.UI
             _progressBar.enabled = true;
         }
 
-        private void SetupMelee()
+        private void SetupMelee(Items.ItemWeaponData data, Sprite icon)
         {
-            _icon.sprite = _iconMelee;
+            _icon.sprite = (icon == null) ? _iconMelee : icon;
 
             _txtAmmo.enabled = false;
 

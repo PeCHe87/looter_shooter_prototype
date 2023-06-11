@@ -95,6 +95,13 @@ namespace FusionExamples.Tanknarok
 
 		#region Public methods
 
+		public void SetEmptyWeapon(Items.ItemWeaponMeleeData itemData)
+		{
+			var weapon = _weapons[0];
+
+			weapon.SetEmptyWeapon(itemData);
+		}
+
 		/// <summary>
 		/// Activate a new weapon when picked up
 		/// </summary>
@@ -177,11 +184,13 @@ namespace FusionExamples.Tanknarok
                 }
 			}
 		}
-		
-		public void ResetAllWeapons()
+
+		public void ResetAllWeapons(Items.ItemWeaponMeleeData itemData)
 		{
 			ResetWeapon(WeaponInstallationType.PRIMARY);
 			ResetWeapon(WeaponInstallationType.SECONDARY);
+
+			SetEmptyWeapon(itemData);
 		}
 
 		public void InstallWeapon(PowerupElement powerup)
@@ -211,6 +220,20 @@ namespace FusionExamples.Tanknarok
 
 			var aimDirection = GetAimingDirection();
 
+			weapon.MeleeAttack(Runner, Object.InputAuthority, aimDirection, _player);
+		}
+
+		public void FistAttack(float delay)
+		{
+			TickTimer tickTimer = primaryFireDelay;
+
+			if (!tickTimer.ExpiredOrNotRunning(Runner)) return;
+
+			primaryFireDelay = TickTimer.CreateFromSeconds(Runner, delay);
+
+			var aimDirection = GetAimingDirection();
+
+			Weapon weapon = _weapons[0];
 			weapon.MeleeAttack(Runner, Object.InputAuthority, aimDirection, _player);
 		}
 
@@ -302,6 +325,16 @@ namespace FusionExamples.Tanknarok
 			newWeapon.name = $"visualWeapon_{displayName}";
         }
 
+		private void RefreshVisualEmptyWeapon()
+		{
+			if (_pivot.childCount > 0)
+			{
+				var previousWeapon = _pivot.GetChild(0);
+
+				Destroy(previousWeapon.gameObject);
+			}
+		}
+
 		#endregion
 
 		#region Reloading actions
@@ -353,7 +386,7 @@ namespace FusionExamples.Tanknarok
 			{
 				var oldWeapon = _weapons[0];
 
-				previousWeaponId = oldWeapon.ItemId;
+				previousWeaponId = oldWeapon.LastEquippedItemId;
 			}
 
 			this.itemId = itemId;
@@ -380,6 +413,13 @@ namespace FusionExamples.Tanknarok
         {
 			if (Object.HasStateAuthority) return;
 
+			if (this.itemId == -1)
+			{
+				RefreshVisualEmptyWeapon();
+
+				return;
+			}
+
 			if (!_player.GetLevelManager().Catalog.TryGetItem(itemId, out var item)) return;
 
 			var itemData = (Items.EquipableItemCatalogData)item.data;
@@ -392,6 +432,13 @@ namespace FusionExamples.Tanknarok
 			if (!changed.Behaviour) return;
 
 			changed.Behaviour.Equip_Remote();
+		}
+
+		public void EquipEmpty()
+		{
+			this.itemId = -1;
+
+			RefreshVisualEmptyWeapon();
 		}
 
         #endregion

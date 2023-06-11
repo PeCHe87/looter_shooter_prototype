@@ -44,6 +44,7 @@ namespace FusionExamples.Tanknarok
         [SerializeField] private float _respawnTime;
         [SerializeField] private LayerMask _pickupMask;
         [SerializeField] private WeaponManager weaponManager;
+        [SerializeField] private ItemWeaponMeleeData _emptyWeaponData = default;
         [SerializeField] private TargeteableBase _targeteableBase = default;
 
         [Header("UI")]
@@ -209,7 +210,7 @@ namespace FusionExamples.Tanknarok
 
                 _weaponInformation = FindObjectOfType<UI_PlayerWeaponInfo>();
 
-                weaponManager.ResetAllWeapons();
+                weaponManager.ResetAllWeapons(_emptyWeaponData);
 
                 _weaponInformation.Init();
 
@@ -553,7 +554,7 @@ namespace FusionExamples.Tanknarok
         private void ResetPlayer()
         {
             Debug.Log($"Resetting player {playerID}, tick={Runner.Simulation.Tick}, timer={respawnTimer.IsRunning}:{respawnTimer.TargetTick}, life={life}, lives={lives}, hasAuthority={Object.HasStateAuthority} to state={state}");
-            weaponManager.ResetAllWeapons();
+            weaponManager.ResetAllWeapons(_emptyWeaponData);
             state = State.Active;
         }
 
@@ -1049,6 +1050,7 @@ namespace FusionExamples.Tanknarok
             if (_isLocal)
             {
                 _playerInfoPanel.SetDisplayName(this.displayName);
+                _playerInfoPanel.SetPlayer(this);
                 _playerInfoPanel.UpdateHealth(this.life, MAX_HEALTH, "RPC SET INFORMATION");
             }
             
@@ -1097,6 +1099,8 @@ namespace FusionExamples.Tanknarok
 
         #region Weapon actions
 
+        private const float _fistDelay = 0.5f;
+
         public void RefreshAssaultWeaponInformation(int ammo)
         {
             if (!_isLocal) return;
@@ -1129,10 +1133,20 @@ namespace FusionExamples.Tanknarok
             var weaponType = weaponManager.GetWeaponType();
 
             // NONE
-            if (weaponType == ItemWeaponType.NONE) return;
+            if (weaponType == ItemWeaponType.NONE)
+            {
+                weaponManager.FistAttack(_fistDelay);
 
-            // ASSAULT
-            if (weaponType == ItemWeaponType.ASSAULT)
+                if (_isLocal)
+                {
+                    _weaponInformation.StartUsing(_fistDelay, weaponManager.primaryFireDelay, Runner);
+                }
+
+                return;
+            }
+
+			// ASSAULT
+			if (weaponType == ItemWeaponType.ASSAULT)
             {
                 weaponManager.FireWeapon(WeaponManager.WeaponInstallationType.PRIMARY);
 
@@ -1185,6 +1199,19 @@ namespace FusionExamples.Tanknarok
 
             return totalAmmo;
         }
+
+        public void UpdateEquippedWeapon(int weaponId)
+		{
+            if (weaponId == -1)
+			{
+                RPC_UnequipWeapon(this.playerID);
+                return;
+			}
+
+            if (!GetLevelManager().Catalog.TryGetItem(weaponId, out var item)) return;
+
+            RPC_EquipWeapon(this.playerID, item.data.id);
+		}
 
         #endregion
 
@@ -1544,10 +1571,11 @@ namespace FusionExamples.Tanknarok
 
             // Refresh weapon information based on weapon type
             var data = ((EquipableItemCatalogData)itemCatalog.data).WeaponData;
-            _weaponInformation.RefreshWeaponType(data.Type, data);
+
+            _weaponInformation.RefreshWeaponType(data.Type, data, itemCatalog.data.icon);
 
             // Refresh player information panel with new equipped weapon
-            _playerInfoPanel.RefreshWeapon(itemCatalog.data.icon);
+            _playerInfoPanel.RefreshWeapon(itemCatalog);
         }
 
         private ItemLootData[] GetInventoryItems()
@@ -1594,6 +1622,44 @@ namespace FusionExamples.Tanknarok
             if (!_isLocal) return;
             
             _inventoryPanel.Refresh(_inventoryData);
+        }
+
+        [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+        public void RPC_EquipWeapon(int playerId, int itemId, RpcInfo info = default)
+        {
+            if (playerId != this.playerID) return;
+
+            GetLevelManager().Catalog.TryGetItem(itemId, out var itemCatalog);
+
+            // Equip weapon
+            weaponManager.Equip(itemCatalog.data.id, (EquipableItemCatalogData)itemCatalog.data, out var previousWeaponId);
+
+            // Update area detection radius based on weapon configuration
+            this.targetDetector.RefreshRadius(weaponManager.EquippedWeapon.RadiusDetection);
+
+            if (!_isLocal) return;
+
+            // Refresh weapon information based on weapon type
+            var data = ((EquipableItemCatalogData)itemCatalog.data).WeaponData;
+
+            _weaponInformation.RefreshWeaponType(data.Type, data, itemCatalog.data.icon);
+
+            // Refresh player information panel with new equipped weapon
+            //_playerInfoPanel.RefreshWeapon(itemCatalog);
+        }
+
+        [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+        public void RPC_UnequipWeapon(int playerId, RpcInfo info = default)
+		{
+            if (playerId != this.playerID) return;
+
+            weaponManager.SetEmptyWeapon(_emptyWeaponData);
+
+            weaponManager.EquipEmpty();
+
+            if (!_isLocal) return;
+
+            _weaponInformation.RefreshWeaponType(ItemWeaponType.NONE);
         }
 
         #endregion

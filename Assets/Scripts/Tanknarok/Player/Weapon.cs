@@ -53,6 +53,7 @@ namespace FusionExamples.Tanknarok
 
 		#region Private properties
 
+		private int _lastEquippedItemId = -1;
 		private int _gunExit;
 		private float _visible;
 		private bool _active;
@@ -76,6 +77,7 @@ namespace FusionExamples.Tanknarok
 		public float RadiusDetection => _radiusDetection;
 		public Items.ItemWeaponData Data => _data;
 		public bool HasWeaponEquipped => _hasWeaponEquipped;
+		public int LastEquippedItemId => _lastEquippedItemId;
 
         #endregion
 
@@ -237,6 +239,8 @@ namespace FusionExamples.Tanknarok
         {
 			_itemId = id;
 
+			_lastEquippedItemId = id;
+
 			_weaponType = data.WeaponData.Type;
 
 			_data = data.WeaponData;
@@ -282,6 +286,26 @@ namespace FusionExamples.Tanknarok
 				_rateOfFire = meleeData.DelayBetweenAttacks;
 				_radiusDetection = meleeData.RadiusDetection;
 			}
+		}
+
+		public void SetEmptyWeapon(Items.ItemWeaponMeleeData meleeData)
+		{
+			_itemId = -1;
+
+			_weaponType = Items.ItemWeaponType.NONE;
+
+			_data = null;
+
+			_hasWeaponEquipped = false;
+
+			_meleeHitMask = meleeData.HitMask;
+			_meleeAreaRadius = meleeData.Radius;
+			_meleeAreaImpulse = meleeData.Impulse;
+			_meleeDamage = (byte)meleeData.Damage;
+			_meleeAttackAngle = meleeData.Angle;
+			_meleeHitVfx = meleeData.HitVfx;
+			_rateOfFire = meleeData.DelayBetweenAttacks;
+			_radiusDetection = meleeData.RadiusDetection;
 		}
 
 		private void ApplyMeleeDamage()
@@ -343,8 +367,6 @@ namespace FusionExamples.Tanknarok
 
 			return true;
 		}
-
-		
 
 		#region Debug
 
