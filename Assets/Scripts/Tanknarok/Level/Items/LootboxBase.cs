@@ -74,19 +74,11 @@ namespace FusionExamples.Tanknarok
             HideLoading();
         }
 
-        public void Take(int id)
+        public void Take(int slotIndex)
         {
-            for (int i = 0; i < _lootData.items.Length; i++)
-            {
-                var item = _lootData.items[i];
-                if (item.id != id) continue;
-
-                item.amount = 0;
-
-                _lootData.items.Set(i, item);
-
-                break;
-            }
+            var item = _lootData.items[slotIndex];
+            item.amount = 0;
+            _lootData.items.Set(slotIndex, item);
 
             var isEmpty = CheckEmpty();
 

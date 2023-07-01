@@ -13,6 +13,7 @@ namespace FusionExamples.Tanknarok.UI
         [SerializeField] private Button _btnClose = default;
         [SerializeField] private Button _btnUse = default;
         [SerializeField] private Button _btnEquip = default;
+        [SerializeField] private Button _btnDrop = default;
         [SerializeField] private TextMeshProUGUI _txtName = default;
         [SerializeField] private Image _icon = default;
 
@@ -42,6 +43,7 @@ namespace FusionExamples.Tanknarok.UI
             _btnUse.onClick.AddListener(UseItem);
             _btnEquip.onClick.AddListener(EquipItem);
             _btnClose.onClick.AddListener(Close);
+            _btnDrop.onClick.AddListener(DropItem);
         }
 
         public void Teardown()
@@ -49,6 +51,7 @@ namespace FusionExamples.Tanknarok.UI
             _btnUse.onClick.RemoveAllListeners();
             _btnEquip.onClick.RemoveAllListeners();
             _btnClose.onClick.RemoveAllListeners();
+            _btnDrop.onClick.RemoveAllListeners();
         }
 
         public void Show(Items.ItemCatalogData itemCatalog, int index)
@@ -127,6 +130,13 @@ namespace FusionExamples.Tanknarok.UI
             Hide();
 
             _callbackSlotInteraction?.Invoke();
+        }
+
+        private void DropItem()
+		{
+            _player.DropInventorySlot(_slotIndex);
+
+            Hide();
         }
 
         private void Close()

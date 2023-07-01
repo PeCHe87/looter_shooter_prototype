@@ -82,6 +82,15 @@ namespace FusionExamples.Tanknarok.UI
             Invoke(nameof(HideFullPanel), _fullPanelVisibleTime);
 		}
 
+        public void DeselectSlot(int index)
+		{
+            if (index >= _slots.Length) return;
+
+            var slot = _slots[index];
+
+            slot.Deselect();
+		}
+
 		#endregion
 
 		#region Private methods

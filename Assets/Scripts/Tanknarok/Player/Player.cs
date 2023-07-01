@@ -295,6 +295,8 @@ namespace FusionExamples.Tanknarok
             CheckForDelivery();
 
             CheckForLootboxInteraction();
+
+            CheckForControlPointInteraction();
         }
 
         /// <summary>
@@ -1213,6 +1215,28 @@ namespace FusionExamples.Tanknarok
             RPC_EquipWeapon(this.playerID, item.data.id);
 		}
 
+        private void CheckWeaponAmmoRefresh(ItemCatalogData itemCatalog)
+		{
+            var weaponEquipped = weaponManager.EquippedWeapon.Data != null;
+
+            if (!weaponEquipped) return;
+
+            var assaultEquipped = weaponManager.EquippedWeapon.Data.Type == ItemWeaponType.ASSAULT;
+
+            if (!assaultEquipped) return;
+
+            var isAmmo = itemCatalog.data.type == ItemType.AMMO;
+
+            if (!isAmmo) return;
+
+            // Check if ammo was the needed one for the equipped assault weapon
+            var assaultData = (ItemWeaponAssaultData)weaponManager.EquippedWeapon.Data;
+
+            if (assaultData.AmmoType.id != itemCatalog.data.id) return;
+
+            weaponManager.ReloadingAfterAmmoChanged();
+        }
+
         #endregion
 
         #region Minimap indicator
@@ -1355,13 +1379,13 @@ namespace FusionExamples.Tanknarok
         ///		- Add item to the player's inventory
         /// </summary>
         /// <param name="id"></param>
-        public void TakeItemFromLoot(int id, int amount)
+        public void TakeItemFromLoot(int slotIndex, int id, int amount)
         {
             if (_lootbox == null) return;
 
-            RPC_TakeItemFromLoot(this.playerID, id, amount);
+            RPC_TakeItemFromLoot(this.playerID, slotIndex, id, amount);
 
-            _lootInGamePanel?.Remove(id);
+            _lootInGamePanel?.Remove(slotIndex);
         }
 
         /// <summary>
@@ -1370,11 +1394,11 @@ namespace FusionExamples.Tanknarok
         /// <param name="id"></param>
         /// <param name="info"></param>
         [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
-        public void RPC_TakeItemFromLoot(int playerId, int id, int amount, RpcInfo info = default)
+        public void RPC_TakeItemFromLoot(int playerId, int slotIndex, int id, int amount, RpcInfo info = default)
         {
             if (playerId != this.playerID) return;
 
-            _lootbox.Take(id);
+            _lootbox.Take(slotIndex);
 
             var itemIsStackable = false;
             
@@ -1385,6 +1409,9 @@ namespace FusionExamples.Tanknarok
 
             // Player's inventory should be updated
             AddItemToInventory(id, amount, itemIsStackable);
+
+            // Check if item is ammo and is the ammo that the current equipped assault weapon uses
+            CheckWeaponAmmoRefresh(itemCatalog);
         }
 
         #endregion
@@ -1428,7 +1455,8 @@ namespace FusionExamples.Tanknarok
         {
             var itemAlreadyExit = _inventoryData.AlreadyExist(id, out var slotIndex);
 
-            if (!itemAlreadyExit)
+            // Check if item is stackable or it doesn't exist already
+            if (!itemIsStackable || !itemAlreadyExit)
             {
                 // Get first free slot
                 slotIndex = _inventoryData.GetFreeSlotIndex();
@@ -1437,7 +1465,7 @@ namespace FusionExamples.Tanknarok
             if (slotIndex == -1) return;
 
             // Add the amount of already existing item
-            if (itemAlreadyExit)
+            if (itemAlreadyExit && itemIsStackable)
             {
                 var existingItem = _inventoryData.items.Get(slotIndex);
                 amount += existingItem.amount;
@@ -1492,6 +1520,11 @@ namespace FusionExamples.Tanknarok
             }
 
             return isFull;
+        }
+
+        public void DropInventorySlot(int slotIndex)
+        {
+            RPC_DropItem(this.playerID, slotIndex);
         }
 
         [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
@@ -1662,6 +1695,34 @@ namespace FusionExamples.Tanknarok
             _weaponInformation.RefreshWeaponType(ItemWeaponType.NONE);
         }
 
+        [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+        public void RPC_DropItem(int playerId, int slotIndex, RpcInfo info = default)
+        {
+            if (playerId != this.playerID) return;
+
+            var item = _inventoryData.items.Get(slotIndex);
+
+            var itemId = item.id;
+
+            var couldGetItem = GetLevelManager().Catalog.TryGetItem(itemId, out var itemCatalog);
+
+            if (!couldGetItem) return;
+
+            item.id = 0;
+            item.amount = 0;
+
+            _inventoryData.items.Set(slotIndex, item);
+
+            if (!_isLocal) return;
+
+            _inventoryPanel.Refresh(_inventoryData);
+
+            _inventoryPanel.DeselectSlot(slotIndex);
+
+            // Check if item is ammo and is the ammo that the current equipped assault weapon uses
+            CheckWeaponAmmoRefresh(itemCatalog);
+        }
+
         #endregion
 
         #region Health
@@ -1719,6 +1780,49 @@ namespace FusionExamples.Tanknarok
             //if (Object.HasStateAuthority) return;
 
             _levelManager.RefreshPlayerKills(this.displayName, killed, (this.team == TeamEnum.BLUE) ? _colorTeamBlue : _colorTeamRed);
+        }
+
+        #endregion
+
+        #region Control points
+
+        [Header("Control Point")]
+        [SerializeField] private float _controlPointInteractionRadius = 4;
+        [SerializeField] private LayerMask _controlPointMask = default;
+
+        private ControlPoint _controlPoint = default;
+        private bool _controlPointDetected = false;
+
+        private void CheckForControlPointInteraction()
+		{
+            // If we run into a lootbox, try to open it
+            if (isActivated && Runner.GetPhysicsScene().OverlapSphere(transform.position, _controlPointInteractionRadius, _overlaps, _controlPointMask, QueryTriggerInteraction.Collide) > 0)
+            {
+                var controlPoint = _overlaps[0].GetComponent<ControlPoint>();
+
+                // Player is already interacting with this control point
+                if (_controlPointDetected && controlPoint == _controlPoint) return;
+
+                if (controlPoint != null && controlPoint.CanInteract(this.team))
+                {
+                    _controlPoint = controlPoint;
+
+                    _controlPointDetected = true;
+
+                    _controlPoint.StartInteracting(GetPlayerId(), this.team);
+
+                    return;
+                }
+            }
+
+            // Check if there is a control point to stop interacting
+            if (!_controlPointDetected) return;
+
+            _controlPoint.StopInteracting(GetPlayerId());
+
+            _controlPoint = null;
+
+            _controlPointDetected = false;
         }
 
         #endregion

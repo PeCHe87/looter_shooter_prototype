@@ -74,7 +74,9 @@ namespace FusionExamples.Tanknarok
 
         public override void FixedUpdateNetwork()
         {
-            // Check if reloading should finish
+			if (!Object.HasInputAuthority) return;
+
+			// Check if reloading should finish
 			if (this.isReloading)
             {
 				if (this.reloadingTime.ExpiredOrNotRunning(Runner))
@@ -350,6 +352,16 @@ namespace FusionExamples.Tanknarok
 			if (this.primaryAmmo >= weapon.InitialAmmo) return;
 
 			StartReloading(weapon);
+		}
+
+		public void ReloadingAfterAmmoChanged()
+		{
+			var weapon = _weapons[_activePrimaryWeapon];
+
+			this.reloadingTime = TickTimer.CreateFromSeconds(Runner, weapon.ReloadingTime);
+			this.isReloading = true;
+
+			_player.StartReloadingWeapon(weapon.ReloadingTime, this.reloadingTime);
 		}
 
 		private void StartReloading(Weapon weapon)

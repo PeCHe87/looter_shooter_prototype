@@ -11,15 +11,18 @@ namespace FusionExamples.Tanknarok
         [SerializeField] private Button _btn = default;
         [SerializeField] private Image _selectionBorder = default;
 
+        private int _index = -1;
         private int _id = default;
         private int _amount = default;
-        private System.Action<int, int, bool> _callback = default;
+        private System.Action<int, int, int, bool> _callback = default;
         private bool _isSelected = false;
 
         public int Id => _id;
 
-        public void Init(System.Action<int, int, bool> callback)
+        public void Init(int index, System.Action<int, int, int, bool> callback)
         {
+            _index = index;
+
             _callback = callback;
 
             _btn.onClick.AddListener(Selection);
@@ -71,7 +74,7 @@ namespace FusionExamples.Tanknarok
                 _isSelected = true;
             }
 
-            _callback?.Invoke(_id, _amount, _isSelected);
+            _callback?.Invoke(_index, _id, _amount, _isSelected);
         }
 
         private void MarkAsSelected()

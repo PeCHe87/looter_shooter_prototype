@@ -27,14 +27,15 @@ namespace FusionExamples.Tanknarok
 
         private int _slotItemId = default;
         private int _slotAmount = default;
-        private System.Action<int, int> _callbackTake = default;
+        private int _slotIndex = default;
+        private System.Action<int, int, int> _callbackTake = default;
         private Player _player = default;
 
         #endregion
 
         #region Public methods
 
-        public void Init(Player player, System.Action<int, int> callback)
+        public void Init(Player player, System.Action<int, int, int> callback)
         {
             _player = player;
 
@@ -81,18 +82,11 @@ namespace FusionExamples.Tanknarok
             _camera.InventoryClose();
         }
 
-        public void Remove(int id)
+        public void Remove(int index)
         {
-            for (int i = 0; i < _slots.Length; i++)
-            {
-                var slot = _slots[i];
+            var slot = _slots[index];
 
-                if (slot.Id != id) continue;
-
-                slot.gameObject.Toggle(false);
-
-                break;
-            }
+            slot.gameObject.Toggle(false);
         }
 
         #endregion
@@ -108,6 +102,8 @@ namespace FusionExamples.Tanknarok
         {
             var alreadyHaveItem = _player.CheckAlreadyHaveItem(_slotItemId);
 
+            // TODO: check if item is stackable
+
             if (!alreadyHaveItem)
             {
                 // Check if player's inventory is already full
@@ -117,9 +113,7 @@ namespace FusionExamples.Tanknarok
             // Get item information
             if (_levelManager.Catalog.TryGetItem(_slotItemId, out var itemCatalog))
             {
-                var displayName = itemCatalog.data.displayName;
-
-                _callbackTake?.Invoke(_slotItemId, _slotAmount);
+                _callbackTake?.Invoke(_slotIndex, _slotItemId, _slotAmount);
 
                 HideTakeButton();
 
@@ -141,7 +135,7 @@ namespace FusionExamples.Tanknarok
             {
                 var slot = _slots[i];
 
-                slot.Init(SelectSlot);
+                slot.Init(i, SelectSlot);
             }
 
             HideSlots();
@@ -167,10 +161,11 @@ namespace FusionExamples.Tanknarok
             }
         }
 
-        private void SelectSlot(int id, int amount, bool isSelected)
+        private void SelectSlot(int slotIndex, int id, int amount, bool isSelected)
         {
             _slotItemId = -1;
             _slotAmount = 0;
+            _slotIndex = slotIndex;
 
             if (isSelected)
             {
@@ -182,7 +177,7 @@ namespace FusionExamples.Tanknarok
                 {
                     var slot = _slots[i];
 
-                    if (slot.Id == id) continue;
+                    if (i == slotIndex) continue; //if (slot.Id == id) continue;
 
                     slot.Deselect();
                 }
